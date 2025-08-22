@@ -1,0 +1,42 @@
+/* src/app/Home.module.scss */
+
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: #f0f2f5;
+}
+
+.title {
+  color: var(--primary-dark-blue);
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.subtitle {
+    color: var(--text-dark);
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.appointmentButton {
+    background-color: var(--primary-dark-blue);
+    color: var(--text-light);
+    border: none;
+    padding: 1rem 2.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+
+    &:hover {
+        background-color: var(--primary-light-blue);
+        transform: translateY(-2px);
+    }
+}

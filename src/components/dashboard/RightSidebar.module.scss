@@ -1,0 +1,77 @@
+/* src/components/dashboard/RightSidebar.module.scss */
+.rightSidebar {
+    width: 320px;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-left: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.profileCard {
+    text-align: center;
+    h3 {
+        text-align: left;
+        margin-bottom: 1.5rem;
+    }
+}
+
+.profileDetails {
+    .profileImage {
+        border-radius: 50%;
+        margin-bottom: 1rem;
+    }
+    h4 {
+        color: var(--primary-dark-blue);
+        font-weight: 600;
+        font-size: 1.2rem;
+    }
+    p {
+        color: var(--text-muted);
+    }
+}
+
+.lastPatientCard {
+    .cardHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        a {
+            color: var(--primary-dark-blue);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+    }
+}
+
+.patientList {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.patientItem {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.patientImage {
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.patientInfo {
+    h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+    p {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+}

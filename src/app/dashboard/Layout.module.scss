@@ -1,0 +1,19 @@
+/* src/app/dashboard/Layout.module.scss */
+.dashboardContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f7f8fc;
+}
+
+// নতুন wrapper-এর জন্য স্টাইল
+.contentWrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.mainContent {
+  flex-grow: 1;
+  padding: 0 2rem 2rem 2rem; // উপরের padding Header থেকে আসবে
+  overflow-y: auto;
+}
