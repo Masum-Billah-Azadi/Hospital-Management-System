@@ -1,0 +1,85 @@
+/* src/app/book-appointment/[doctorId]/Booking.module.scss */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f0f4f8;
+    padding: 2rem;
+}
+
+.formWrapper {
+    background: white;
+    padding: 2.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 500px;
+
+    h2 {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: var(--text-dark);
+        span {
+            color: var(--primary-dark-blue);
+        }
+    }
+}
+
+.formGroup {
+    margin-bottom: 1.5rem;
+
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    input, textarea {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-family: inherit;
+    }
+}
+.submitButton {
+    width: 100%;
+    background-color: var(--primary-dark-blue);
+    color: white;
+    padding: 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+
+    &:hover:not(:disabled) {
+        background-color: var(--primary-light-blue);
+    }
+    
+    &:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+}
+
+.message {
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+.error {
+    color: #dc3545;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.success {
+    color: #28a745;
+    text-align: center;
+    margin-bottom: 1rem;
+}

@@ -1,0 +1,69 @@
+/* src/app/dashboard/profile/Profile.module.scss */
+.profileContainer {
+    background-color: white;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    max-width: 800px;
+    margin: 0 auto;
+
+    h1 {
+        margin-bottom: 2rem;
+        color: var(--primary-dark-blue);
+    }
+}
+
+.profileForm {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.formGroup {
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    input, textarea {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 1rem;
+
+        &:disabled {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+        }
+    }
+}
+
+.message {
+    text-align: center;
+    font-weight: 500;
+    color: green;
+}
+
+.submitButton {
+    background-color: var(--primary-dark-blue);
+    color: white;
+    padding: 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+
+    &:hover:not(:disabled) {
+        background-color: var(--primary-light-blue);
+    }
+
+    &:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+}

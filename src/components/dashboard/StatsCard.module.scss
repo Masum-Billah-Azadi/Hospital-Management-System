@@ -1,0 +1,34 @@
+/* src/components/dashboard/StatsCard.module.scss */
+.card {
+  background-color: white;
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(10px, 1fr));
+  gap: 1rem;
+  box-shadow: var(--shadow);
+  flex-grow: 1;
+}
+
+.iconWrapper {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  color: white;
+}
+
+.cardInfo {
+  p {
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+  }
+  h3 {
+    color: var(--primary-dark-blue);
+    font-size: 1.5rem;
+  }
+}

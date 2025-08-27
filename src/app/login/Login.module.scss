@@ -1,0 +1,103 @@
+/* src/app/login/Login.module.scss */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f0f4f8;
+}
+
+.formWrapper {
+  background: white;
+  padding: 2.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+}
+// এই নতুন ক্লাসটি যোগ করো
+.roleSelector {
+    display: flex;
+    background-color: #f0f4f8;
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+    padding: 5px;
+
+    button {
+        flex: 1;
+        padding: 0.8rem;
+        border: none;
+        background-color: transparent;
+        color: var(--text-muted);
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .active {
+        background-color: white;
+        color: var(--primary-dark-blue);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+}
+
+.title {
+  color: var(--primary-dark-blue);
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+
+.inputField {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.submitButton, .googleButton {
+  width: 100%;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submitButton {
+  background-color: var(--primary-dark-blue);
+  color: white;
+  &:hover { background-color: var(--primary-light-blue); }
+}
+
+.divider {
+  margin: 1.5rem 0;
+  color: #aaa;
+}
+
+.googleButton {
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  margin-bottom: 1.5rem;
+  &:hover { background-color: #f5f5f5; }
+}
+
+.error {
+  color: #e53e3e;
+  margin-bottom: 1rem;
+}
+
+.toggleText {
+  color: #555;
+  span {
+    color: var(--primary-dark-blue);
+    font-weight: 600;
+    cursor: pointer;
+  }
+}
