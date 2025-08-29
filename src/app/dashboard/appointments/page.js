@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Modal from '@/components/common/Modal'; // ১. Modal ইম্পোর্ট করো
+import Modal from '@/components/common/Modal';
 import styles from './Appointments.module.scss';
 
 const AppointmentsPage = () => {
@@ -15,7 +15,7 @@ const AppointmentsPage = () => {
     const [selectedAppointment, setSelectedAppointment] = useState(null);
     const [scheduledTime, setScheduledTime] = useState('');
 
-    // ডেটা Fetch করার ফাংশন
+    // Fetch appointments from the API
     const fetchAppointments = async () => {
         try {
             setLoading(true);
@@ -34,7 +34,7 @@ const AppointmentsPage = () => {
         fetchAppointments();
     }, []);
     
-    // স্ট্যাটাস আপডেট করার ফাংশন
+    // Function to update appointment status (Accept/Reject)
     const handleUpdateStatus = async (appointmentId, status, time = null) => {
         try {
             const res = await fetch('/api/appointments/update-status', {
@@ -49,31 +49,46 @@ const AppointmentsPage = () => {
 
             if (!res.ok) throw new Error('Failed to update status');
 
-            // UI আপডেট করা
+            // Update the UI
             if (status === 'rejected') {
-                // Reject হলে লিস্ট থেকে বাদ দেওয়া
                 setAppointments(prev => prev.filter(app => app._id !== appointmentId));
             } else {
-                // Accept হলে লিস্ট আপডেট করা
                 setAppointments(prev => 
                     prev.map(app => 
                         app._id === appointmentId ? { ...app, status, scheduledTime: time } : app
                     )
                 );
             }
-
         } catch (err) {
             alert(`Error: ${err.message}`);
         }
     };
 
-    // Accept বাটন ক্লিক হ্যান্ডলার
+    // Function to add a patient to the doctor's permanent list
+    const handleAddPatient = async (patientId) => {
+        try {
+            const res = await fetch('/api/patients', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ patientId }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.message || 'Failed to add patient.');
+            }
+            alert('Patient added to your list successfully!');
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        }
+    };
+
+    // Modal handlers
     const handleAcceptClick = (appointment) => {
         setSelectedAppointment(appointment);
         setIsModalOpen(true);
     };
 
-    // Modal সাবমিট হ্যান্ডলার
     const handleModalSubmit = (e) => {
         e.preventDefault();
         if (!scheduledTime) {
@@ -84,7 +99,6 @@ const AppointmentsPage = () => {
         closeModal();
     };
     
-    // Modal বন্ধ করার ফাংশন
     const closeModal = () => {
         setIsModalOpen(false);
         setSelectedAppointment(null);
@@ -127,19 +141,23 @@ const AppointmentsPage = () => {
                                                 <button className={styles.rejectBtn} onClick={() => handleUpdateStatus(app._id, 'rejected')}>Reject</button>
                                             </>
                                         )}
+                                        {app.status === 'accepted' && (
+                                            <button className={styles.addPatientBtn} onClick={() => handleAddPatient(app.patient._id)}>
+                                                Add to My Patients
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="5">No pending appointments found.</td>
+                                <td colSpan="5">No appointments found.</td>
                             </tr>
                         )}
                     </tbody>
                 </table>
             </div>
 
-            {/* Accept করার জন্য Modal */}
             <Modal isOpen={isModalOpen} onClose={closeModal}>
                 <h2>Set Appointment Time</h2>
                 {selectedAppointment && <p>For: {selectedAppointment.patient.name}</p>}

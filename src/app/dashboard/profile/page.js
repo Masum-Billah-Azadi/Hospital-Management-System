@@ -2,7 +2,6 @@
 "use client";
 
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import styles from './Profile.module.scss';
 
@@ -136,7 +135,7 @@ const ProfilePage = () => {
                 
                 {message && <p className={styles.message}>{message}</p>}
                 
-                <button type="submit" disabled={isSaving} className='style.submitButton'>
+                <button type="submit" disabled={isSaving} className={styles.submitButton}>
                     {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
             </form>

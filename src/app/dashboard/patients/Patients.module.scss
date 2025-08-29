@@ -1,0 +1,68 @@
+/* src/app/dashboard/patients/Patients.module.scss */
+.container {
+    h1 { margin-bottom: 2rem; }
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.addButton {
+    background-color: var(--primary-dark-blue);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    &:hover { background-color: var(--primary-light-blue); }
+}
+
+.tableContainer {
+    background-color: white;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.patientsTable {
+    width: 100%;
+    border-collapse: collapse;
+    thead th {
+        text-align: left;
+        padding: 1rem;
+        color: var(--text-muted);
+        border-bottom: 1px solid #f0f0f0;
+    }
+    tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    tbody tr:last-child td {
+        border-bottom: none;
+    }
+}
+
+.patientInfo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    img { border-radius: 50%; }
+    span { font-weight: 500; }
+}
+
+.viewButton {
+    background-color: #f0f4f8;
+    color: var(--primary-dark-blue);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    &:hover { background-color: #e2e8f0; }
+}
