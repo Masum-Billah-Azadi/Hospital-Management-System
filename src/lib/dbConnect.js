@@ -1,13 +1,6 @@
 import mongoose from 'mongoose';
-
 const connection = {};
-
 async function dbConnect() {
-  if (connection.isConnected) {
-    console.log("Already connected to the database.");
-    return;
-  }
-
   if (mongoose.connections.length > 0) {
     connection.isConnected = mongoose.connections[0].readyState;
     if (connection.isConnected === 1) {
@@ -22,11 +15,9 @@ async function dbConnect() {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log("New connection to the database.");
     connection.isConnected = db.connections[0].readyState;
   } catch (error) {
     console.error("Error connecting to the database:", error);
-    // process.exit(1); // Optional: exit process on connection failure
   }
 }
 
