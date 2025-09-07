@@ -12,11 +12,17 @@ const PatientProfilePage = () => {
     const params = useParams();
     const { patientId } = params;
 
-    // এডিটিং এর জন্য নতুন State
+    // Vitals এডিটিং এর জন্য State (অপরিবর্তিত)
     const [isEditingVitals, setIsEditingVitals] = useState(false);
     const [vitalsData, setVitalsData] = useState({ age: '', height: '', weight: '', bloodPressure: '' });
+    
+    // Medications ফর্ম দেখানো বা লুকানোর জন্য State
     const [showMedicationForm, setShowMedicationForm] = useState(false);
-    const [newMedication, setNewMedication] = useState({ medicationName: '', dosage: '', notes: '' });
+
+    // **নতুন:** ডাইনামিক প্রেসক্রিপশন ফর্মের জন্য State
+    const [medications, setMedications] = useState([{ medicationName: '', dosage: '', notes: '' }]);
+    const [generalNotes, setGeneralNotes] = useState('');
+    const [suggestedReports, setSuggestedReports] = useState(''); // ইনপুটের জন্য স্ট্রিং, সাবমিটের সময় অ্যারে হবে
 
     useEffect(() => {
         if (patientId) {
@@ -26,7 +32,7 @@ const PatientProfilePage = () => {
                     if (!res.ok) throw new Error('Could not fetch patient profile.');
                     const data = await res.json();
                     setPatientData(data);
-                    // Vitals state ইনিশিয়ালাইজ করা
+                    // Vitals state ইনিশিয়ালাইজ করা
                     setVitalsData({
                         age: data.age || '',
                         height: data.height || '',
@@ -42,7 +48,13 @@ const PatientProfilePage = () => {
             fetchPatientProfile();
         }
     }, [patientId]);
+    // **নতুন:** PDF ডাউনলোড করার জন্য হ্যান্ডলার ফাংশন
+    const handleDownloadPdf = (prescriptionId) => {
+    // নতুন ট্যাবে PDF তৈরির API রুটটি খোলা হবে, যা স্বয়ংক্রিয়ভাবে ডাউনলোড শুরু করবে
+    window.open(`/api/prescriptions/${prescriptionId}/pdf`, '_blank');
+    };
 
+    // Vitals পরিবর্তন ও সেভ করার ফাংশন (অপরিবর্তিত)
     const handleVitalsChange = (e) => {
         const { name, value } = e.target;
         setVitalsData(prev => ({ ...prev, [name]: value }));
@@ -57,43 +69,65 @@ const PatientProfilePage = () => {
             });
             if (!res.ok) throw new Error('Failed to update vitals.');
             const updatedProfile = await res.json();
-            
-            // UI তে ডেটা আপডেট করা
             setPatientData(prev => ({ ...prev, ...updatedProfile.profile }));
-            setIsEditingVitals(false); // এডিটিং মোড বন্ধ করা
+            setIsEditingVitals(false);
         } catch (error) {
             console.error(error);
             alert('Error updating vitals.');
         }
     };
 
-    const handleNewMedicationChange = (e) => {
+    // **নতুন:** ডাইনামিক মেডিসিন ফিল্ড পরিবর্তনের জন্য হ্যান্ডলার
+    const handleMedicationChange = (index, e) => {
         const { name, value } = e.target;
-        setNewMedication(prev => ({ ...prev, [name]: value }));
+        const updatedMedications = [...medications];
+        updatedMedications[index][name] = value;
+        setMedications(updatedMedications);
     };
 
+    // **নতুন:** আরও মেডিসিন যোগ করার ফাংশন
+    const addMedicationField = () => {
+        setMedications([...medications, { medicationName: '', dosage: '', notes: '' }]);
+    };
+
+    // **নতুন:** মেডিসিন বাদ দেওয়ার ফাংশন
+    const removeMedicationField = (index) => {
+        if (medications.length <= 1) return; // অন্তত একটি ফিল্ড থাকবে
+        const updatedMedications = medications.filter((_, i) => i !== index);
+        setMedications(updatedMedications);
+    };
+
+    // **আপডেটেড:** প্রেসক্রিপশন সাবমিট করার ফাংশন
     const handleMedicationSubmit = async (e) => {
         e.preventDefault();
+
+        // suggestedReports স্ট্রিং-কে অ্যারে-তে রূপান্তর
+        const reportsArray = suggestedReports.split(',').map(report => report.trim()).filter(report => report);
+
         try {
             const res = await fetch('/api/prescriptions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     patientProfileId: patientData._id,
-                    ...newMedication
+                    medications: medications,
+                    generalNotes: generalNotes,
+                    suggestedReports: reportsArray,
                 }),
             });
             if (!res.ok) throw new Error('Failed to add prescription.');
             const { prescription } = await res.json();
             
-            // UI তে নতুন প্রেসক্রিপশনটি তাৎক্ষণিকভাবে যোগ করা
+            // UI-তে নতুন প্রেসক্রিপশনটি তাৎক্ষণিকভাবে যোগ করা
             setPatientData(prev => ({
                 ...prev,
-                prescriptions: [prescription, ...prev.prescriptions]
+                prescriptions: [prescription, ...(prev.prescriptions || [])]
             }));
 
             // ফর্ম রিসেট এবং বন্ধ করা
-            setNewMedication({ medicationName: '', dosage: '', notes: '' });
+            setMedications([{ medicationName: '', dosage: '', notes: '' }]);
+            setGeneralNotes('');
+            setSuggestedReports('');
             setShowMedicationForm(false);
 
         } catch (error) {
@@ -102,12 +136,10 @@ const PatientProfilePage = () => {
         }
     };
 
-
     if (loading) return <div>Loading patient profile...</div>;
     if (!patientData) return <div>Patient profile not found.</div>;
 
     const { user, prescriptions } = patientData;
-
 
     return (
         <div className={styles.container}>
@@ -126,12 +158,12 @@ const PatientProfilePage = () => {
             </div>
 
             <div className={styles.grid}>
+                {/* Vitals Card (অপরিবর্তিত) */}
                 <div className={styles.card}>
                     <div className={styles.cardTitle}>
                         <h2>Vitals</h2>
                         {!isEditingVitals && <button onClick={() => setIsEditingVitals(true)} className={styles.editButton}>Edit</button>}
                     </div>
-
                     {isEditingVitals ? (
                         <div className={styles.editForm}>
                             <label>Age: <input name="age" value={vitalsData.age} onChange={handleVitalsChange} /></label>
@@ -153,37 +185,72 @@ const PatientProfilePage = () => {
                     )}
                 </div>
                 
-                {/* --- Medications Card আপডেট করা হয়েছে --- */}
-                <div className={styles.card}>
+                {/* --- Medications Card (সম্পূর্ণ আপডেট করা হয়েছে) --- */}
+                <div className={`${styles.card} ${styles.medicationsCard}`}>
                     <div className={styles.cardTitle}>
                         <h2>Medications</h2>
-                        {!showMedicationForm && <button onClick={() => setShowMedicationForm(true)} className={styles.editButton}>Add New</button>}
+                        {!showMedicationForm && <button onClick={() => setShowMedicationForm(true)} className={styles.editButton}>Add New Prescription</button>}
                     </div>
 
+                    {/* **নতুন:** ডাইনামিক প্রেসক্রিপশন ফর্ম */}
                     {showMedicationForm && (
                         <form onSubmit={handleMedicationSubmit} className={styles.medicationForm}>
-                            <input name="medicationName" value={newMedication.medicationName} onChange={handleNewMedicationChange} placeholder="Medication Name" required />
-                            <input name="dosage" value={newMedication.dosage} onChange={handleNewMedicationChange} placeholder="Dosage (e.g., 500mg, 1+0+1)" />
-                            <textarea name="notes" value={newMedication.notes} onChange={handleNewMedicationChange} placeholder="Notes (optional)" rows="3"></textarea>
+                            {medications.map((med, index) => (
+                                <div key={index} className={styles.medicationInputGroup}>
+                                    <input name="medicationName" value={med.medicationName} onChange={(e) => handleMedicationChange(index, e)} placeholder="Medication Name" required />
+                                    <input name="dosage" value={med.dosage} onChange={(e) => handleMedicationChange(index, e)} placeholder="Dosage (e.g., 500mg, 1+0+1)" />
+                                    {medications.length > 1 && (
+                                        <button type="button" onClick={() => removeMedicationField(index)} className={styles.removeButton}>Remove</button>
+                                    )}
+                                </div>
+                            ))}
+                            <button type="button" onClick={addMedicationField} className={styles.addButton}>+ Add More Medicine</button>
+                            
+                            <textarea name="generalNotes" value={generalNotes} onChange={(e) => setGeneralNotes(e.target.value)} placeholder="General Notes..." rows="3"></textarea>
+                            <textarea name="suggestedReports" value={suggestedReports} onChange={(e) => setSuggestedReports(e.target.value)} placeholder="Suggested Reports (comma separated, e.g., CBC, Urine R/E)" rows="2"></textarea>
+                            
                             <div className={styles.formActions}>
-                                <button type="submit" className={styles.saveButton}>Save</button>
+                                <button type="submit" className={styles.saveButton}>Save Prescription</button>
                                 <button type="button" onClick={() => setShowMedicationForm(false)} className={styles.cancelButton}>Cancel</button>
                             </div>
                         </form>
                     )}
 
-                    <div className={styles.medicationList}>
+                    {/* **নতুন:** প্রেসক্রিপশন তালিকা দেখানোর UI */}
+                    <div className={styles.prescriptionsList}>
                         {prescriptions && prescriptions.length > 0 ? (
                             prescriptions.map(p => (
-                                <div key={p._id} className={styles.medicationItem}>
-                                    <h4>{p.medicationName}</h4>
-                                    <p><strong>Dosage:</strong> {p.dosage || 'N/A'}</p>
-                                    {p.notes && <p><strong>Notes:</strong> {p.notes}</p>}
-                                    <small>Prescribed on {new Date(p.createdAt).toLocaleDateString()}</small>
+                                <div key={p._id} className={styles.prescriptionItem}>
+                                    <div className={styles.doctorInfo}>
+                                        <Image src={p.doctorInfo.image || '/default-avatar.png'} alt={p.doctorInfo.name} width={40} height={40} className={styles.doctorAvatar} />
+                                        <div>
+                                            <strong>Dr. {p.doctorInfo.name}</strong>
+                                            <small>Prescribed on {new Date(p.createdAt).toLocaleDateString()}</small>
+                                        </div>
+                                    </div>
+                                    <div className={styles.prescriptionDetails}>
+                                        <ul>
+                                            {p.medications.map((med, index) => (
+                                                <li key={index}>
+                                                    <span>{med.medicationName}</span>
+                                                    <span>{med.dosage}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        {p.generalNotes && <p className={styles.notes}><strong>Notes:</strong> {p.generalNotes}</p>}
+                                        {p.suggestedReports && p.suggestedReports.length > 0 && <p className={styles.notes}><strong>Tests:</strong> {p.suggestedReports.join(', ')}</p>}
+                                    </div>
+                                    <button 
+                                        onClick={() => handleDownloadPdf(p._id)} 
+                                        className={styles.downloadButton}
+                                        title="Download PDF"
+                                    >
+                                        &#x21E9; {/* Unicode for download icon */}
+                                    </button>
                                 </div>
                             ))
                         ) : (
-                            <p>No medications prescribed yet.</p>
+                            !showMedicationForm && <p>No medications prescribed yet.</p>
                         )}
                     </div>
                 </div>
@@ -191,7 +258,6 @@ const PatientProfilePage = () => {
                 <div className={styles.card}>
                     <h2>Reports</h2>
                     <p>No reports uploaded yet.</p>
-                    {/* আমরা পরের ধাপে এখানে রিপোর্ট আপলোড করার ব্যবস্থা করব */}
                 </div>
             </div>
         </div>
