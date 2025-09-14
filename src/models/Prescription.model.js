@@ -50,12 +50,6 @@ const PrescriptionSchema = new mongoose.Schema({
     default: [],
   },
   
-  // **নতুন:** রিপোর্ট ফাইলের লিঙ্ক
-  reports: [{
-    fileName: { type: String, required: true },
-    url: { type: String, required: true }, // S3 or local storage URL
-  }],
-  
 }, {
   timestamps: true, // কখন প্রেসক্রিপশনটি তৈরি হয়েছে তা জানার জন্য
 });

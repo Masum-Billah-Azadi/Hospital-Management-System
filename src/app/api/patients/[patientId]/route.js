@@ -61,40 +61,43 @@ export async function GET(request, { params }) {
 }
 // --- নতুন PATCH ফাংশন ---
 // রোগীর Vitals আপডেট করার জন্য
+// **PATCH ফাংশনটি আপডেট করা হচ্ছে**
 export async function PATCH(request, { params }) {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'doctor') {
-        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
     const { patientId } = params;
-    if (!mongoose.Types.ObjectId.isValid(patientId)) {
-        return NextResponse.json({ message: "Invalid Patient ID" }, { status: 400 });
-    }
+    const data = await request.json();
 
     try {
         await dbConnect();
         
-        // নিরাপত্তা চেক: এই ডাক্তার কি রোগীর তালিকাভুক্ত ডাক্তার?
-        const patientProfile = await PatientProfile.findOne({ user: patientId });
-        if (!patientProfile || !patientProfile.doctors.some(id => id.equals(session.user.id))) {
-            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        const patientProfile = await PatientProfile.findById(patientId);
+        if (!patientProfile) {
+            return NextResponse.json({ message: "Patient not found" }, { status: 404 });
+        }
+
+        // Vitals ডেটা আপডেট করা হচ্ছে (যদি থাকে)
+        if (data.age) patientProfile.age = data.age;
+        if (data.height) patientProfile.height = data.height;
+        if (data.weight) patientProfile.weight = data.weight;
+        if (data.bloodPressure) patientProfile.bloodPressure = data.bloodPressure;
+        if (data.gender) patientProfile.gender = data.gender;
+        if (data.diagnosis) patientProfile.diagnosis = data.diagnosis;
+        
+        // **নতুন:** রিপোর্ট ডেটা যোগ করা হচ্ছে (যদি থাকে)
+        if (data.reports && Array.isArray(data.reports)) {
+            data.reports.forEach(report => {
+                patientProfile.reports.push(report);
+            });
         }
         
-        // রিকোয়েস্ট বডি থেকে নতুন ডেটা নেওয়া
-        const updatedVitals = await request.json();
+        const updatedProfile = await patientProfile.save();
         
-        // Vitals ডেটা আপডেট করা
-        const updatedProfile = await PatientProfile.findByIdAndUpdate(
-            patientProfile._id,
-            { $set: updatedVitals },
-            { new: true } // আপডেট করা ডকুমেন্টটি রিটার্ন করার জন্য
-        );
+        // ফ্রন্টএন্ডে পাঠানোর জন্য পপুলেট করা
+        const populatedProfile = await updatedProfile.populate('user prescriptions');
 
-        return NextResponse.json({ message: 'Vitals updated successfully', profile: updatedProfile }, { status: 200 });
+        return NextResponse.json({ success: true, profile: populatedProfile });
 
     } catch (error) {
-        console.error("Error updating vitals:", error);
-        return NextResponse.json({ message: 'Server error' }, { status: 500 });
+        console.error("Error updating patient profile:", error);
+        return NextResponse.json({ message: "Server Error" }, { status: 500 });
     }
 }

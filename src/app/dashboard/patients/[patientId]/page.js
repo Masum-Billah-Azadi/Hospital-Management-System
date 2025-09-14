@@ -1,9 +1,9 @@
 // src/app/dashboard/patients/[patientId]/page.js
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import styles from './PatientProfile.module.scss';
 
 const PatientProfilePage = () => {
@@ -12,17 +12,20 @@ const PatientProfilePage = () => {
     const params = useParams();
     const { patientId } = params;
 
-    // Vitals এডিটিং এর জন্য State (অপরিবর্তিত)
+    // Vitals এডিটিং এর জন্য State
     const [isEditingVitals, setIsEditingVitals] = useState(false);
     const [vitalsData, setVitalsData] = useState({ age: '', height: '', weight: '', bloodPressure: '' });
     
     // Medications ফর্ম দেখানো বা লুকানোর জন্য State
     const [showMedicationForm, setShowMedicationForm] = useState(false);
 
-    // **নতুন:** ডাইনামিক প্রেসক্রিপশন ফর্মের জন্য State
+    // ডাইনামিক প্রেসক্রিপশন ফর্মের জন্য State
     const [medications, setMedications] = useState([{ medicationName: '', dosage: '', notes: '' }]);
     const [generalNotes, setGeneralNotes] = useState('');
-    const [suggestedReports, setSuggestedReports] = useState(''); // ইনপুটের জন্য স্ট্রিং, সাবমিটের সময় অ্যারে হবে
+    const [suggestedReports, setSuggestedReports] = useState('');
+
+    // **নতুন:** রিপোর্ট আপলোডের জন্য State
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         if (patientId) {
@@ -32,7 +35,6 @@ const PatientProfilePage = () => {
                     if (!res.ok) throw new Error('Could not fetch patient profile.');
                     const data = await res.json();
                     setPatientData(data);
-                    // Vitals state ইনিশিয়ালাইজ করা
                     setVitalsData({
                         age: data.age || '',
                         height: data.height || '',
@@ -48,10 +50,9 @@ const PatientProfilePage = () => {
             fetchPatientProfile();
         }
     }, [patientId]);
-    // **নতুন:** PDF ডাউনলোড করার জন্য হ্যান্ডলার ফাংশন
+
     const handleDownloadPdf = (prescriptionId) => {
-    // নতুন ট্যাবে PDF তৈরির API রুটটি খোলা হবে, যা স্বয়ংক্রিয়ভাবে ডাউনলোড শুরু করবে
-    window.open(`/api/prescriptions/${prescriptionId}/pdf`, '_blank');
+        window.open(`/api/prescriptions/${prescriptionId}/pdf`, '_blank');
     };
 
     // Vitals পরিবর্তন ও সেভ করার ফাংশন (অপরিবর্তিত)
@@ -85,23 +86,66 @@ const PatientProfilePage = () => {
         setMedications(updatedMedications);
     };
 
-    // **নতুন:** আরও মেডিসিন যোগ করার ফাংশন
     const addMedicationField = () => {
         setMedications([...medications, { medicationName: '', dosage: '', notes: '' }]);
     };
 
-    // **নতুন:** মেডিসিন বাদ দেওয়ার ফাংশন
     const removeMedicationField = (index) => {
-        if (medications.length <= 1) return; // অন্তত একটি ফিল্ড থাকবে
+        if (medications.length <= 1) return;
         const updatedMedications = medications.filter((_, i) => i !== index);
         setMedications(updatedMedications);
     };
+    
+    // **নতুন:** রিপোর্ট আপলোড হ্যান্ডলার
+const handleReportUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    // **আপডেটেড:** প্রেসক্রিপশন সাবমিট করার ফাংশন
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        // ধাপ ১: Cloudinary-তে ফাইল আপলোড
+        const uploadRes = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+        });
+        if (!uploadRes.ok) throw new Error('File upload failed.');
+        
+        const uploadData = await uploadRes.json();
+        
+        if (uploadData.success) {
+            // ধাপ ২: নির্ভরযোগ্য PATCH রুটে রিপোর্ট ডেটা পাঠানো
+            const saveToDbRes = await fetch(`/api/patients/${patientId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    reports: [{ // অ্যারে হিসেবে পাঠানো হচ্ছে
+                        fileName: uploadData.fileName,
+                        url: uploadData.url,
+                    }]
+                }),
+            });
+
+            if (!saveToDbRes.ok) throw new Error('Failed to save report to profile.');
+            
+            const data = await saveToDbRes.json();
+            setPatientData(data.profile); // আপডেটেড প্রোফাইল দিয়ে UI আপডেট
+        }
+    } catch (error) {
+        console.error(error);
+        alert(error.message);
+    } finally {
+        setIsUploading(false);
+        e.target.value = null;
+    }
+};
+
+// ... আপনার বাকি সব কোড অপরিবর্তিত থাকবে ...
+
     const handleMedicationSubmit = async (e) => {
         e.preventDefault();
-
-        // suggestedReports স্ট্রিং-কে অ্যারে-তে রূপান্তর
         const reportsArray = suggestedReports.split(',').map(report => report.trim()).filter(report => report);
 
         try {
@@ -110,21 +154,21 @@ const PatientProfilePage = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     patientProfileId: patientData._id,
-                    medications: medications,
-                    generalNotes: generalNotes,
+                    medications,
+                    generalNotes,
                     suggestedReports: reportsArray,
+                    reports: [], // এখন প্রেসক্রিপশনের সাথে রিপোর্ট পাঠানো হচ্ছে না
                 }),
             });
             if (!res.ok) throw new Error('Failed to add prescription.');
             const { prescription } = await res.json();
             
-            // UI-তে নতুন প্রেসক্রিপশনটি তাৎক্ষণিকভাবে যোগ করা
             setPatientData(prev => ({
                 ...prev,
                 prescriptions: [prescription, ...(prev.prescriptions || [])]
             }));
 
-            // ফর্ম রিসেট এবং বন্ধ করা
+            // ফর্ম রিসেট
             setMedications([{ medicationName: '', dosage: '', notes: '' }]);
             setGeneralNotes('');
             setSuggestedReports('');
@@ -139,7 +183,7 @@ const PatientProfilePage = () => {
     if (loading) return <div>Loading patient profile...</div>;
     if (!patientData) return <div>Patient profile not found.</div>;
 
-    const { user, prescriptions } = patientData;
+    const { user, prescriptions, reports } = patientData; // রোগীর ডেটা থেকে 'reports' নেওয়া হচ্ছে
 
     return (
         <div className={styles.container}>
@@ -254,10 +298,39 @@ const PatientProfilePage = () => {
                         )}
                     </div>
                 </div>
-
                 <div className={styles.card}>
-                    <h2>Reports</h2>
-                    <p>No reports uploaded yet.</p>
+                    <div className={styles.cardTitle}>
+                        <h2>Reports</h2>
+                        {/* একটি লেবেলকে বাটনের মতো করে দেখানো হচ্ছে */}
+                        <label htmlFor="report-upload" className={styles.editButton}>
+                            {isUploading ? 'Uploading...' : 'Upload New'}
+                        </label>
+                        <input 
+                            type="file" 
+                            id="report-upload" 
+                            onChange={handleReportUpload} 
+                            disabled={isUploading}
+                            style={{ display: 'none' }} // আসল ইনপুটটি লুকানো থাকবে
+                            accept="image/png, image/jpeg, image/jpg, application/pdf" // ফাইলের ধরন নির্দিষ্ট করা
+                        />
+                    </div>
+                    
+                    <div className={styles.reportsList}>
+                        {/* patientData থেকে রিপোর্টগুলো দেখানো হচ্ছে */}
+                        {(patientData.reports && patientData.reports.length > 0) ? (
+                            <ul>
+                                {patientData.reports.map((report, index) => (
+                                    <li key={index}>
+                                        <a href={report.url} target="_blank" rel="noopener noreferrer">
+                                            {report.fileName}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p>No reports uploaded yet.</p>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
