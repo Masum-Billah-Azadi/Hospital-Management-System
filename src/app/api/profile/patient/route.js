@@ -50,22 +50,26 @@ export async function PATCH(request) {
         const data = await request.json();
         const userId = session.user.id;
 
-        await User.findByIdAndUpdate(userId, {
-            name: data.name,
-            image: data.image,
-        });
-
+        // User মডেলে নাম ও ছবি আপডেট করা (যদি থাকে)
+        if (data.name || data.image) {
+            await User.findByIdAndUpdate(userId, {
+                name: data.name,
+                image: data.image,
+            });
+        }
+        
         const patientProfile = await PatientProfile.findOne({ user: userId });
         if (!patientProfile) {
             return NextResponse.json({ success: false, message: "Patient profile not found." }, { status: 404 });
         }
         
-        // Vitals, DOB এবং Report আপডেট করা
-        patientProfile.age = data.age;
-        patientProfile.height = data.height;
-        patientProfile.weight = data.weight;
-        patientProfile.bloodPressure = data.bloodPressure;
-        
+        // **পরিবর্তন:** শুধুমাত্র যে ডেটাগুলো আসছে, সেগুলোই আপডেট করা হচ্ছে
+        if (data.age !== undefined) patientProfile.age = data.age;
+        if (data.height !== undefined) patientProfile.height = data.height;
+        if (data.weight !== undefined) patientProfile.weight = data.weight;
+        if (data.bloodPressure !== undefined) patientProfile.bloodPressure = data.bloodPressure;
+
+        // রিপোর্ট যোগ করা হচ্ছে (যদি থাকে)
         if (data.report) {
             patientProfile.reports.push(data.report);
         }
