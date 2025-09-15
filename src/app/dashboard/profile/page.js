@@ -1,10 +1,16 @@
 // src/app/dashboard/profile/page.js
 "use client";
 
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import styles from './Profile.module.scss';
 
+const specialties = [
+    "MEDICINE", "OBSTETRICS & GYNECOLOGY", "PAEDIATRIC MEDICINE",
+    "GENERAL & LAPAROSCOPIC SURGERY", "ORTHOPEDICS", "CARDIOLOGY",
+    "ENT", "NEURO MEDICINE", "RADIOLOGY & IMAGING", "ONCOLOGY"
+];
 const ProfilePage = () => {
     const { data: session, update } = useSession();
     
@@ -45,10 +51,12 @@ const ProfilePage = () => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
-
+    const [imagePreview, setImagePreview] = useState(null);
     const handleFileChange = (e) => {
-        if (e.target.files) {
-            setSelectedFile(e.target.files[0]);
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+            setImagePreview(URL.createObjectURL(file));
         }
     };
 
@@ -106,28 +114,62 @@ const ProfilePage = () => {
 
     return (
         <div className={styles.profileContainer}>
-            <h1>Edit Your Profile</h1>
+            <div className={styles.header}>
+                <h1>Edit Your Profile</h1>
+                <p>Keep your professional information up to date.</p>
+            </div>
+
             <form onSubmit={handleSubmit} className={styles.profileForm}>
-                <div className={styles.formGroup}>
-                    <label htmlFor="name">Full Name</label>
-                    <input type="text" name="name" id="name" value={formData.name} onChange={handleInputChange} />
+                {/* **নতুন:** দুই-কলামের গ্রিড লেআউট */}
+                <div className={styles.formGrid}>
+                    {/* --- বাম কলাম: সাধারণ তথ্য --- */}
+                    <div className={styles.leftColumn}>
+                        <div className={styles.formGroup}>
+                            <label htmlFor="name">Full Name</label>
+                            <input type="text" name="name" id="name" value={formData.name} onChange={handleInputChange} />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label htmlFor="email">Email Address</label>
+                            <input type="email" name="email" id="email" value={formData.email} disabled />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label htmlFor="phone">Phone Number</label>
+                            <input type="tel" name="phone" id="phone" value={formData.phone} onChange={handleInputChange} />
+                        </div>
+                    </div>
+
+                    {/* --- ডান কলাম: প্রোফাইল ছবি --- */}
+                    <div className={styles.rightColumn}>
+                        <div className={styles.formGroup}>
+                            <label>Profile Picture</label>
+                            <div className={styles.profilePicUploader}>
+                                <Image
+                                    src={imagePreview || formData.image || `https://ui-avatars.com/api/?name=${formData.name}`}
+                                    alt="Profile Preview"
+                                    width={120}
+                                    height={120}
+                                    className={styles.avatarPreview}
+                                />
+                                <label htmlFor="image" className={styles.uploadButton}>
+                                    Change Picture
+                                </label>
+                                <input type="file" name="image" id="image" onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div className={styles.formGroup}>
-                    <label htmlFor="email">Email Address</label>
-                    <input type="email" name="email" id="email" value={formData.email} disabled />
-                </div>
-                <div className={styles.formGroup}>
-                    <label htmlFor="image">Profile Picture</label>
-                    <input type="file" name="image" id="image" onChange={handleFileChange} accept="image/png, image/jpeg, image/jpg"/>
-                </div>
-                <div className={styles.formGroup}>
-                    <label htmlFor="phone">Phone Number</label>
-                    <input type="tel" name="phone" id="phone" value={formData.phone} onChange={handleInputChange} />
-                </div>
+                
+                {/* --- গ্রিডের নিচে থাকা ফিল্ডগুলো --- */}
                 <div className={styles.formGroup}>
                     <label htmlFor="designation">Designation</label>
-                    <input type="text" name="designation" id="designation" value={formData.designation} onChange={handleInputChange} placeholder="e.g., Cardiologist"/>
+                    <select name="designation" id="designation" value={formData.designation} onChange={handleInputChange}>
+                        <option value="" disabled>Select a specialty</option>
+                        {specialties.map(specialty => (
+                            <option key={specialty} value={specialty}>{specialty}</option>
+                        ))}
+                    </select>
                 </div>
+
                 <div className={styles.formGroup}>
                     <label htmlFor="address">Address</label>
                     <textarea name="address" id="address" rows="4" value={formData.address} onChange={handleInputChange}></textarea>
