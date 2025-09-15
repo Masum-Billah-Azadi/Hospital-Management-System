@@ -1,56 +1,63 @@
 /* src/components/patient-dashboard/PatientSidebar.module.scss */
 .sidebar {
-    width: 250px;
-    background-color: #ffffff;
-    border-right: 1px solid #e9ecef;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
+  width: 260px;
+  flex-shrink: 0;
+  background-color: var(--primary-dark-blue);
+  color: var(--text-light);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
 }
 
 .logo {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--primary-dark-blue);
-    margin-bottom: 3rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 3rem;
+  text-align: center;
+  a {
+    color: white;
+  }
 }
 
 .nav ul {
-    list-style: none;
-    li a {
-        display: block;
-        padding: 0.8rem 1rem;
-        margin-bottom: 0.5rem;
-        border-radius: 8px;
-        color: var(--text-muted);
-        font-weight: 500;
-        transition: all 0.2s ease-in-out;
-        &:hover {
-            background-color: #f0f4f8;
-            color: var(--primary-dark-blue);
-        }
-    }
-    li.active a {
-        background-color: var(--primary-dark-blue);
+  list-style: none;
+  li {
+    margin-bottom: 1.5rem;
+    a {
+      display: block;
+      padding: 0.8rem 1.2rem;
+      border-radius: var(--border-radius);
+      transition: background-color 0.3s ease;
+      color: #d0d0ff;
+      &:hover {
+        background-color: var(--primary-light-blue);
         color: white;
-        font-weight: 600;
+      }
     }
+    &.active a {
+      background-color: var(--primary-light-blue);
+      color: white;
+      font-weight: 600;
+    }
+  }
 }
 
 .logout {
-    margin-top: auto;
-    button {
-        width: 100%;
-        background: #f8d7da;
-        color: #721c24;
-        border: none;
-        padding: 0.8rem;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 1rem;
-        font-weight: 600;
-        &:hover {
-            background-color: #f5c6cb;
-        }
+  margin-top: auto; // Pushes logout to the bottom
+  button {
+    width: 100%;
+    background: none;
+    border: 1px solid var(--primary-light-blue);
+    color: white;
+    padding: 0.8rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 1rem;
+    &:hover {
+      background-color: var(--primary-light-blue);
     }
+  }
 }

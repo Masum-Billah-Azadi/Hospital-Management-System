@@ -232,7 +232,7 @@ const handleReportUpload = async (e) => {
                 {/* --- Medications Card (সম্পূর্ণ আপডেট করা হয়েছে) --- */}
                 <div className={`${styles.card} ${styles.medicationsCard}`}>
                     <div className={styles.cardTitle}>
-                        <h2>Medications</h2>
+                        <h2>Prescriptions</h2>
                         {!showMedicationForm && <button onClick={() => setShowMedicationForm(true)} className={styles.editButton}>Add New Prescription</button>}
                     </div>
 
@@ -289,7 +289,7 @@ const handleReportUpload = async (e) => {
                                         className={styles.downloadButton}
                                         title="Download PDF"
                                     >
-                                        &#x21E9; {/* Unicode for download icon */}
+                                        Download PDF
                                     </button>
                                 </div>
                             ))

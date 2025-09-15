@@ -165,31 +165,12 @@ const PatientDashboardPage = () => {
                         </form>
                     ) : (
                         <ul className={styles.vitalsList}>
-                            <li><strong>Age:</strong> <span>{profile.age || 'N/A'}</span></li>
-                            <li><strong>Height:</strong> <span>{profile.height || 'N/A'}</span></li>
-                            <li><strong>Weight:</strong> <span>{profile.weight || 'N/A'}</span></li>
-                            <li><strong>Blood Pressure:</strong> <span>{profile.bloodPressure || 'N/A'}</span></li>
+                            <li><strong>Age:</strong>{profile.age || 'N/A'}</li>
+                            <li><strong>Height:</strong>{profile.height || 'N/A'}</li>
+                            <li><strong>Weight:</strong>{profile.weight || 'N/A'}</li>
+                            <li><strong>Blood Pressure:</strong>{profile.bloodPressure || 'N/A'}</li>
                         </ul>
                     )}
-                </div>
-
-                <div className={styles.card}>
-                    <div className={styles.cardTitle}>
-                        <h2>Your Reports</h2>
-                        <label htmlFor="report-upload" className={styles.editButton}>
-                            {isUploadingReport ? 'Uploading...' : 'Upload New Report'}
-                        </label>
-                        <input type="file" id="report-upload" onChange={handleReportUpload} disabled={isUploadingReport} style={{ display: 'none' }} accept="image/*, application/pdf" />
-                    </div>
-                    <ul className={styles.vitalsList}>
-                        {(profile.reports && profile.reports.length > 0) ? (
-                            profile.reports.map((report, index) => (
-                                <li key={index}><a href={report.url} target="_blank" rel="noopener noreferrer">{report.fileName}</a></li>
-                            ))
-                        ) : (
-                            <li>No reports uploaded yet.</li>
-                        )}
-                    </ul>
                 </div>
 
                 <div className={`${styles.card} ${styles.fullWidthCard}`}>
@@ -220,6 +201,24 @@ const PatientDashboardPage = () => {
                             <p>You have no prescriptions yet.</p>
                         )}
                     </div>
+                </div>
+                <div className={styles.card}>
+                    <div className={styles.cardTitle}>
+                        <h2>Your Reports</h2>
+                        <label htmlFor="report-upload" className={styles.editButton}>
+                            {isUploadingReport ? 'Uploading...' : 'Upload New Report'}
+                        </label>
+                        <input type="file" id="report-upload" onChange={handleReportUpload} disabled={isUploadingReport} style={{ display: 'none' }} accept="image/*, application/pdf" />
+                    </div>
+                    <ul className={styles.vitalsList}>
+                        {(profile.reports && profile.reports.length > 0) ? (
+                            profile.reports.map((report, index) => (
+                                <li key={index}><a href={report.url} target="_blank" rel="noopener noreferrer">{report.fileName}</a></li>
+                            ))
+                        ) : (
+                            <li>No reports uploaded yet.</li>
+                        )}
+                    </ul>
                 </div>
             </div>
         </div>

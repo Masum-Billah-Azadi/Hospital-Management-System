@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import styles from './Doctors.module.scss';
 
 const FindDoctorsPage = () => {
-    const [doctors, setDoctors] = useState([]);
+    const [doctorProfiles, setDoctorProfiles] = useState([]); // **পরিবর্তন:** state এর নাম পরিবর্তন
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -15,7 +15,8 @@ const FindDoctorsPage = () => {
             try {
                 const res = await fetch('/api/doctors');
                 const data = await res.json();
-                setDoctors(data);
+                // **পরিবর্তন:** শুধুমাত্র সেই প্রোফাইলগুলো ফিল্টার করা হচ্ছে যাদের user তথ্য আছে
+                setDoctorProfiles(data.filter(profile => profile.user));
             } catch (error) {
                 console.error("Failed to fetch doctors", error);
             } finally {
@@ -34,18 +35,24 @@ const FindDoctorsPage = () => {
                 <p>Choose from our list of expert medical professionals.</p>
             </header>
             <main className={styles.doctorsGrid}>
-                {doctors.length > 0 ? doctors.map(doctor => (
-                    <div key={doctor._id} className={styles.doctorCard}>
+                {doctorProfiles.length > 0 ? doctorProfiles.map(profile => (
+                    <div key={profile._id} className={styles.doctorCard}>
                         <Image
-                            src={doctor.image || `https://ui-avatars.com/api/?name=${doctor.name.replace(/\s/g, '+')}&background=random`}
-                            alt={`Dr. ${doctor.name}`}
+                            // **পরিবর্তন:** profile.user.image থেকে ছবি নেওয়া হচ্ছে
+                            src={profile.user.image || `https://ui-avatars.com/api/?name=${profile.user.name.replace(/\s/g, '+')}&background=random`}
+                            alt={`Dr. ${profile.user.name}`}
                             width={100}
                             height={100}
                             className={styles.doctorAvatar}
                         />
-                        <h3>Dr. {doctor.name}</h3>
-                        <p className={styles.specialty}>General Physician</p>
-                        <Link href={`/book-appointment/${doctor._id}`} className={styles.bookButton}>
+                        {/* **পরিবর্তন:** profile.user.name থেকে নাম নেওয়া হচ্ছে */}
+                        <h3>Dr. {profile.user.name}</h3>
+                        
+                        {/* **মূল পরিবর্তন:** ডেজিগনেশন এখন ডাইনামিক */}
+                        <p className={styles.specialty}>{profile.designation || 'Doctor'}</p>
+                        
+                        {/* **পরিবর্তন:** profile.user._id দিয়ে লিঙ্ক তৈরি হচ্ছে */}
+                        <Link href={`/book-appointment/${profile.user._id}`} className={styles.bookButton}>
                             Book Appointment
                         </Link>
                     </div>

@@ -142,7 +142,20 @@
     border-radius: 6px;
   }
 }
-
+.downloadButton {
+  background-color: #4a6ee0;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  &:hover {
+    background-color: #3a5ac0;
+  }
+}
 .medicationList {
   margin-top: 1.5rem;
   display: flex;
