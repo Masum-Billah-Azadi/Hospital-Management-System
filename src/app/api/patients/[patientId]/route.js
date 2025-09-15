@@ -1,33 +1,41 @@
 // src/app/api/patients/[patientId]/route.js
 import dbConnect from "@/lib/dbConnect";
 import PatientProfile from "@/models/PatientProfile.model";
+import Prescription from    "@/models/Prescription.model";
 import { NextResponse } from "next/server";
 // User এবং Prescription মডেল এখানে প্রয়োজন হতে পারে GET এর জন্য
-import User from "@/models/User.model"; 
-import Prescription from "@/models/Prescription.model";
 
 // GET ফাংশন (ডাক্তার রোগীর তথ্য দেখার জন্য)
 export async function GET(request, { params }) {
-    const { patientId } = params;
+    const { patientId: userId } = params;
+
     try {
         await dbConnect();
-        const patientProfile = await PatientProfile.findById(patientId)
-            .populate('user')
-            .populate({
-                path: 'prescriptions',
-                options: { sort: { createdAt: -1 } }
-            });
+        
+        const patientProfile = await PatientProfile.findOne({ user: userId })
+            .populate('user');
 
         if (!patientProfile) {
-            return NextResponse.json(null, { status: 404 });
+            return NextResponse.json({ message: "Patient profile not found." }, { status: 404 });
         }
-        return NextResponse.json(patientProfile);
+        
+        // **নতুন:** প্রেসক্রিপশনগুলো আলাদাভাবে খোঁজা হচ্ছে
+        const prescriptions = await Prescription.find({ patientProfile: patientProfile._id })
+            .sort({ createdAt: -1 });
+
+        // **নতুন:** দুটি ফলাফল একসাথে করে পাঠানো হচ্ছে
+        const responseData = {
+            ...patientProfile.toObject(),
+            prescriptions: prescriptions
+        };
+
+        return NextResponse.json(responseData);
+
     } catch (error) {
         console.error("Error fetching patient profile by doctor:", error);
         return NextResponse.json({ message: "Server error" }, { status: 500 });
     }
 }
-
 // PATCH ফাংশন (ডাক্তার রোগীর Vitals আপডেট করার জন্য)
 export async function PATCH(request, { params }) {
     const { patientId } = params;

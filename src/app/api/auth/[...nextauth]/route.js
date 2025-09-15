@@ -96,13 +96,20 @@ export const authOptions = {
     },
 
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.name = token.name;
-        session.user.image = token.image;
-      }
-      return session;
+        if (token && token.id) {
+            // ডাটাবেস থেকে ব্যবহারকারীর সর্বশেষ তথ্য আনা হচ্ছে
+            await dbConnect();
+            const dbUser = await User.findById(token.id).select('-password');
+            
+            if (dbUser) {
+                // সেশনে সর্বশেষ তথ্য যোগ করা হচ্ছে
+                session.user.id = dbUser._id.toString();
+                session.user.role = dbUser.role; // <-- ডাটাবেস থেকে আসা নতুন role
+                session.user.name = dbUser.name;
+                session.user.image = dbUser.image;
+            }
+        }
+        return session;
     },
   },
 
@@ -118,3 +125,4 @@ export const authOptions = {
 const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
+
