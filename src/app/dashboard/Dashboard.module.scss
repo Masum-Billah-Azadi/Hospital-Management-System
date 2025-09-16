@@ -1,15 +1,130 @@
 /* src/app/dashboard/Dashboard.module.scss */
-.main {
-    padding: 2rem;
+.dashboardContainer {
+  padding: 2rem;
 }
 
-.title {
-    color: var(--text-dark);
-    margin-bottom: 1rem;
+.header {
+  margin-bottom: 2rem;
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+  }
+  p {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+  }
 }
+
 .statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.statCard {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  .iconWrapper {
+    font-size: 2rem;
+    background-color: #f0f4ff;
+    color: #4a6ee0;
+    height: 60px;
+    width: 60px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    place-items: center;
+    border-radius: 50%;
+  }
+
+  .statInfo {
+    p {
+      margin: 0;
+      color: #7f8c8d;
+      font-size: 0.9rem;
+    }
+    span {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+  }
+}
+
+.appointmentsSection {
+  h2 {
+    font-size: 1.5rem;
+    color: #34495e;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #ecf0f1;
+  }
+}
+
+.appointmentList {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+
+  .appointmentItem {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+.patientInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 500;
+  color: #34495e;
+}
+
+.patientAvatar {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.appointmentTime {
+  color: #7f8c8d;
+}
+
+.viewProfileBtn {
+  background-color: #ecf0f1;
+  color: #34495e;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  text-align: center;
+  justify-self: end;
+  font-weight: 500;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #bdc3c7;
+    color: #2c3e50;
+  }
+}
+
+.loading {
+  font-size: 1.2rem;
+  color: #777;
+  text-align: center;
+  padding: 4rem;
 }
