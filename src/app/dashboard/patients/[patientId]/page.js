@@ -1,9 +1,9 @@
 // src/app/dashboard/patients/[patientId]/page.js
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import styles from './PatientProfile.module.scss';
 
 const PatientProfilePage = () => {
@@ -12,11 +12,21 @@ const PatientProfilePage = () => {
     const params = useParams();
     const { patientId } = params;
 
-    // এডিটিং এর জন্য নতুন State
+    // Vitals এডিটিং এর জন্য State
     const [isEditingVitals, setIsEditingVitals] = useState(false);
     const [vitalsData, setVitalsData] = useState({ age: '', height: '', weight: '', bloodPressure: '' });
+    
+    // Medications ফর্ম দেখানো বা লুকানোর জন্য State
     const [showMedicationForm, setShowMedicationForm] = useState(false);
-    const [newMedication, setNewMedication] = useState({ medicationName: '', dosage: '', notes: '' });
+
+    // ডাইনামিক প্রেসক্রিপশন ফর্মের জন্য State
+    const [medications, setMedications] = useState([{ medicationName: '', dosage: '', notes: '' }]);
+    const [generalNotes, setGeneralNotes] = useState('');
+    const [suggestedReports, setSuggestedReports] = useState('');
+    
+
+    // **নতুন:** রিপোর্ট আপলোডের জন্য State
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         if (patientId) {
@@ -26,7 +36,6 @@ const PatientProfilePage = () => {
                     if (!res.ok) throw new Error('Could not fetch patient profile.');
                     const data = await res.json();
                     setPatientData(data);
-                    // Vitals state ইনিশিয়ালাইজ করা
                     setVitalsData({
                         age: data.age || '',
                         height: data.height || '',
@@ -43,57 +52,120 @@ const PatientProfilePage = () => {
         }
     }, [patientId]);
 
+    const handleDownloadPdf = (prescriptionId) => {
+        window.open(`/api/prescriptions/${prescriptionId}/pdf`, '_blank');
+    };
+
+    // Vitals পরিবর্তন ও সেভ করার ফাংশন (অপরিবর্তিত)
     const handleVitalsChange = (e) => {
         const { name, value } = e.target;
         setVitalsData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleVitalsSave = async () => {
+    try {
+        const res = await fetch(`/api/patients/${patientId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(vitalsData),
+        });
+        if (!res.ok) throw new Error('Failed to update vitals.');
+
+        // **পরিবর্তন:** সরাসরি নতুন ডেটা দিয়ে state আপডেট করা হচ্ছে
+        const updatedData = await res.json();
+        setPatientData(updatedData);
+        
+        setIsEditingVitals(false);
+        alert("Vitals updated successfully!");
+    } catch (error) {
+        console.error(error);
+        alert('Error updating vitals.');
+    }
+};
+
+    // **নতুন:** ডাইনামিক মেডিসিন ফিল্ড পরিবর্তনের জন্য হ্যান্ডলার
+    const handleMedicationChange = (index, e) => {
+        const { name, value } = e.target;
+        const updatedMedications = [...medications];
+        updatedMedications[index][name] = value;
+        setMedications(updatedMedications);
+    };
+
+    const addMedicationField = () => {
+        setMedications([...medications, { medicationName: '', dosage: '', notes: '' }]);
+    };
+
+    const removeMedicationField = (index) => {
+        if (medications.length <= 1) return;
+        const updatedMedications = medications.filter((_, i) => i !== index);
+        setMedications(updatedMedications);
+    };
+    
+const handleReportUploadByDoctor = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
         try {
-            const res = await fetch(`/api/patients/${patientId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(vitalsData),
-            });
-            if (!res.ok) throw new Error('Failed to update vitals.');
-            const updatedProfile = await res.json();
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+            if (!uploadRes.ok) throw new Error('File upload failed.');
+            const uploadData = await uploadRes.json();
             
-            // UI তে ডেটা আপডেট করা
-            setPatientData(prev => ({ ...prev, ...updatedProfile.profile }));
-            setIsEditingVitals(false); // এডিটিং মোড বন্ধ করা
+            if (uploadData.success) {
+                const saveToDbRes = await fetch(`/api/patients/${patientId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        report: { fileName: uploadData.fileName, url: uploadData.url }
+                    }),
+                });
+                if (!saveToDbRes.ok) throw new Error('Failed to save report.');
+                
+                const updateData = await saveToDbRes.json();
+                setPatientData(updateData); // UI আপডেট
+                alert("Report added successfully!");
+            }
         } catch (error) {
-            console.error(error);
-            alert('Error updating vitals.');
+            alert(error.message);
+        } finally {
+            setIsUploading(false);
+            e.target.value = null;
         }
     };
 
-    const handleNewMedicationChange = (e) => {
-        const { name, value } = e.target;
-        setNewMedication(prev => ({ ...prev, [name]: value }));
-    };
+// ... আপনার বাকি সব কোড অপরিবর্তিত থাকবে ...
 
     const handleMedicationSubmit = async (e) => {
         e.preventDefault();
+        const reportsArray = suggestedReports.split(',').map(report => report.trim()).filter(report => report);
+
         try {
             const res = await fetch('/api/prescriptions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     patientProfileId: patientData._id,
-                    ...newMedication
+                    medications,
+                    generalNotes,
+                    suggestedReports: reportsArray,
+                    reports: [], // এখন প্রেসক্রিপশনের সাথে রিপোর্ট পাঠানো হচ্ছে না
                 }),
             });
             if (!res.ok) throw new Error('Failed to add prescription.');
             const { prescription } = await res.json();
             
-            // UI তে নতুন প্রেসক্রিপশনটি তাৎক্ষণিকভাবে যোগ করা
             setPatientData(prev => ({
                 ...prev,
-                prescriptions: [prescription, ...prev.prescriptions]
+                prescriptions: [prescription, ...(prev.prescriptions || [])]
             }));
 
-            // ফর্ম রিসেট এবং বন্ধ করা
-            setNewMedication({ medicationName: '', dosage: '', notes: '' });
+            // ফর্ম রিসেট
+            setMedications([{ medicationName: '', dosage: '', notes: '' }]);
+            setGeneralNotes('');
+            setSuggestedReports('');
             setShowMedicationForm(false);
 
         } catch (error) {
@@ -102,12 +174,10 @@ const PatientProfilePage = () => {
         }
     };
 
-
     if (loading) return <div>Loading patient profile...</div>;
     if (!patientData) return <div>Patient profile not found.</div>;
 
-    const { user, prescriptions } = patientData;
-
+    const { user, prescriptions, reports } = patientData;
 
     return (
         <div className={styles.container}>
@@ -126,12 +196,12 @@ const PatientProfilePage = () => {
             </div>
 
             <div className={styles.grid}>
+                {/* Vitals Card (অপরিবর্তিত) */}
                 <div className={styles.card}>
                     <div className={styles.cardTitle}>
                         <h2>Vitals</h2>
                         {!isEditingVitals && <button onClick={() => setIsEditingVitals(true)} className={styles.editButton}>Edit</button>}
                     </div>
-
                     {isEditingVitals ? (
                         <div className={styles.editForm}>
                             <label>Age: <input name="age" value={vitalsData.age} onChange={handleVitalsChange} /></label>
@@ -153,45 +223,103 @@ const PatientProfilePage = () => {
                     )}
                 </div>
                 
-                {/* --- Medications Card আপডেট করা হয়েছে --- */}
-                <div className={styles.card}>
+                {/* --- Medications Card (সম্পূর্ণ আপডেট করা হয়েছে) --- */}
+                <div className={`${styles.card} ${styles.medicationsCard}`}>
                     <div className={styles.cardTitle}>
-                        <h2>Medications</h2>
-                        {!showMedicationForm && <button onClick={() => setShowMedicationForm(true)} className={styles.editButton}>Add New</button>}
+                        <h2>Prescriptions</h2>
+                        {!showMedicationForm && <button onClick={() => setShowMedicationForm(true)} className={styles.editButton}>Add New Prescription</button>}
                     </div>
 
+                    {/* **নতুন:** ডাইনামিক প্রেসক্রিপশন ফর্ম */}
                     {showMedicationForm && (
                         <form onSubmit={handleMedicationSubmit} className={styles.medicationForm}>
-                            <input name="medicationName" value={newMedication.medicationName} onChange={handleNewMedicationChange} placeholder="Medication Name" required />
-                            <input name="dosage" value={newMedication.dosage} onChange={handleNewMedicationChange} placeholder="Dosage (e.g., 500mg, 1+0+1)" />
-                            <textarea name="notes" value={newMedication.notes} onChange={handleNewMedicationChange} placeholder="Notes (optional)" rows="3"></textarea>
+                            {medications.map((med, index) => (
+                                <div key={index} className={styles.medicationInputGroup}>
+                                    <input name="medicationName" value={med.medicationName} onChange={(e) => handleMedicationChange(index, e)} placeholder="Medication Name" required />
+                                    <input name="dosage" value={med.dosage} onChange={(e) => handleMedicationChange(index, e)} placeholder="Dosage (e.g., 500mg, 1+0+1)" />
+                                    {medications.length > 1 && (
+                                        <button type="button" onClick={() => removeMedicationField(index)} className={styles.removeButton}>Remove</button>
+                                    )}
+                                </div>
+                            ))}
+                            <button type="button" onClick={addMedicationField} className={styles.addButton}>+ Add More Medicine</button>
+                            
+                            <textarea name="generalNotes" value={generalNotes} onChange={(e) => setGeneralNotes(e.target.value)} placeholder="General Notes..." rows="3"></textarea>
+                            <textarea name="suggestedReports" value={suggestedReports} onChange={(e) => setSuggestedReports(e.target.value)} placeholder="Suggested Reports (comma separated, e.g., CBC, Urine R/E)" rows="2"></textarea>
+                            
                             <div className={styles.formActions}>
-                                <button type="submit" className={styles.saveButton}>Save</button>
+                                <button type="submit" className={styles.saveButton}>Save Prescription</button>
                                 <button type="button" onClick={() => setShowMedicationForm(false)} className={styles.cancelButton}>Cancel</button>
                             </div>
                         </form>
                     )}
 
-                    <div className={styles.medicationList}>
+                    {/* **নতুন:** প্রেসক্রিপশন তালিকা দেখানোর UI */}
+                    <div className={styles.prescriptionsList}>
                         {prescriptions && prescriptions.length > 0 ? (
                             prescriptions.map(p => (
-                                <div key={p._id} className={styles.medicationItem}>
-                                    <h4>{p.medicationName}</h4>
-                                    <p><strong>Dosage:</strong> {p.dosage || 'N/A'}</p>
-                                    {p.notes && <p><strong>Notes:</strong> {p.notes}</p>}
-                                    <small>Prescribed on {new Date(p.createdAt).toLocaleDateString()}</small>
+                                <div key={p._id} className={styles.prescriptionItem}>
+                                    <div className={styles.doctorInfo}>
+                                        <Image src={p.doctorInfo.image || '/default-avatar.png'} alt={p.doctorInfo.name} width={40} height={40} className={styles.doctorAvatar} />
+                                        <div>
+                                            <strong>Dr. {p.doctorInfo.name}</strong>
+                                            <small>Prescribed on {new Date(p.createdAt).toLocaleDateString()}</small>
+                                        </div>
+                                    </div>
+                                    <div className={styles.prescriptionDetails}>
+                                        <ul>
+                                            {p.medications.map((med, index) => (
+                                                <li key={index}>
+                                                    <span>{med.medicationName}</span>
+                                                    <span>{med.dosage}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        {p.generalNotes && <p className={styles.notes}><strong>Notes:</strong> {p.generalNotes}</p>}
+                                        {p.suggestedReports && p.suggestedReports.length > 0 && <p className={styles.notes}><strong>Tests:</strong> {p.suggestedReports.join(', ')}</p>}
+                                    </div>
+                                    <button 
+                                        onClick={() => handleDownloadPdf(p._id)} 
+                                        className={styles.downloadButton}
+                                        title="Download PDF"
+                                    >
+                                        Download PDF
+                                    </button>
                                 </div>
                             ))
                         ) : (
-                            <p>No medications prescribed yet.</p>
+                            !showMedicationForm && <p>No medications prescribed yet.</p>
                         )}
                     </div>
                 </div>
-
                 <div className={styles.card}>
-                    <h2>Reports</h2>
-                    <p>No reports uploaded yet.</p>
-                    {/* আমরা পরের ধাপে এখানে রিপোর্ট আপলোড করার ব্যবস্থা করব */}
+                    <div className={styles.cardTitle}>
+                        <h2>Reports</h2>
+                        <label htmlFor="report-upload-doctor" className={styles.editButton}>
+                            {isUploading ? 'Uploading...' : 'Upload New Report'}
+                        </label>
+                        <input 
+                            type="file" 
+                            id="report-upload-doctor" 
+                            onChange={handleReportUploadByDoctor} 
+                            disabled={isUploading}
+                            style={{ display: 'none' }}
+                            accept="image/*, application/pdf"
+                        />
+                    </div>
+                    <div className={styles.reportsList}>
+                        {(reports && reports.length > 0) ? (
+                            <ul>
+                                {reports.map((report, index) => (
+                                    <li key={index}>
+                                        <a href={report.url} target="_blank" rel="noopener noreferrer">{report.fileName}</a>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p>No reports uploaded for this patient.</p>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

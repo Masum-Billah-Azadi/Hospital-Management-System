@@ -28,6 +28,11 @@ const PatientSidebar = () => {
                             </li>
                         );
                     })}
+                     <li>
+                        <a href="http://anirban.lovestoblog.com/" target="_blank" rel="noopener noreferrer">
+                            Blood Bank & Donation
+                        </a>
+                    </li>
                 </ul>
             </nav>
             <div className={styles.logout}>

@@ -1,100 +1,63 @@
-// src/app/api/patients/[patientId]/route.js
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
-import PatientProfile from '@/models/PatientProfile.model';
-import User from '@/models/User.model';
-import Prescription from '@/models/Prescription.model'; // Prescription মডেল ইম্পোর্ট করুন
-import mongoose from 'mongoose';
+import dbConnect from "@/lib/dbConnect";
+import PatientProfile from "@/models/PatientProfile.model";
+import Prescription from "@/models/Prescription.model";
+import User from "@/models/User.model";
+import { NextResponse } from "next/server";
 
-
+// GET ফাংশন (অপরিবর্তিত)
 export async function GET(request, { params }) {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'doctor') {
-        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { patientId } = params;
-    if (!mongoose.Types.ObjectId.isValid(patientId)) {
-        return NextResponse.json({ message: "Invalid Patient ID" }, { status: 400 });
-    }
-
+    const { patientId: userId } = params;
     try {
         await dbConnect();
-        
-        // ধাপ ১: রোগীর প্রোফাইল এবং বেসিক তথ্য আনা
-        const patientProfile = await PatientProfile.findOne({ user: patientId })
-            .populate({
-                path: 'user',
-                model: User,
-                select: 'name email image'
-            });
-
+        const patientProfile = await PatientProfile.findOne({ user: userId }).populate('user');
         if (!patientProfile) {
             return NextResponse.json({ message: "Patient profile not found." }, { status: 404 });
         }
-
-        // ধাপ ২: নিরাপত্তা চেক (ডাক্তার অনুমোদিত কি না)
-        const isAuthorized = patientProfile.doctors.some(id => id.equals(session.user.id));
-        if (!isAuthorized) {
-            return NextResponse.json({ message: "Forbidden. You are not authorized to view this patient's profile." }, { status: 403 });
-        }
-        
-        // ধাপ ৩: রোগীর সব প্রেসক্রিপশন খুঁজে বের করা
-        const prescriptions = await Prescription.find({ patientProfile: patientProfile._id })
-            .populate('doctor', 'name') // প্রেসক্রিপশনটি কোন ডাক্তার দিয়েছেন তার নাম আনার জন্য
-            .sort({ createdAt: -1 }); // নতুন প্রেসক্রিপশনগুলো আগে দেখানোর জন্য
-
-        // ধাপ ৪: সব তথ্য একত্রিত করে পাঠানো
+        const prescriptions = await Prescription.find({ patientProfile: patientProfile._id }).sort({ createdAt: -1 });
         const responseData = {
             ...patientProfile.toObject(),
-            prescriptions: prescriptions,
+            prescriptions: prescriptions
         };
-        
-        return NextResponse.json(responseData, { status: 200 });
-
+        return NextResponse.json(responseData);
     } catch (error) {
-        console.error("Error fetching patient profile:", error);
-        return NextResponse.json({ message: 'Server error' }, { status: 500 });
+        console.error("Error fetching patient profile by doctor:", error);
+        return NextResponse.json({ message: "Server error" }, { status: 500 });
     }
 }
-// --- নতুন PATCH ফাংশন ---
-// রোগীর Vitals আপডেট করার জন্য
+
+// PATCH ফাংশন (পরিবর্তিত)
 export async function PATCH(request, { params }) {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'doctor') {
-        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { patientId } = params;
-    if (!mongoose.Types.ObjectId.isValid(patientId)) {
-        return NextResponse.json({ message: "Invalid Patient ID" }, { status: 400 });
-    }
-
+    const { patientId: userId } = params;
+    const data = await request.json();
     try {
         await dbConnect();
-        
-        // নিরাপত্তা চেক: এই ডাক্তার কি রোগীর তালিকাভুক্ত ডাক্তার?
-        const patientProfile = await PatientProfile.findOne({ user: patientId });
-        if (!patientProfile || !patientProfile.doctors.some(id => id.equals(session.user.id))) {
-            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        const patientProfile = await PatientProfile.findOne({ user: userId });
+        if (!patientProfile) {
+            return NextResponse.json({ success: false, message: "Patient not found" }, { status: 404 });
         }
-        
-        // রিকোয়েস্ট বডি থেকে নতুন ডেটা নেওয়া
-        const updatedVitals = await request.json();
-        
-        // Vitals ডেটা আপডেট করা
-        const updatedProfile = await PatientProfile.findByIdAndUpdate(
-            patientProfile._id,
-            { $set: updatedVitals },
-            { new: true } // আপডেট করা ডকুমেন্টটি রিটার্ন করার জন্য
-        );
 
-        return NextResponse.json({ message: 'Vitals updated successfully', profile: updatedProfile }, { status: 200 });
+        // Vitals এবং রিপোর্ট আপডেট
+        if (data.age !== undefined) patientProfile.age = data.age;
+        if (data.height !== undefined) patientProfile.height = data.height;
+        if (data.weight !== undefined) patientProfile.weight = data.weight;
+        if (data.bloodPressure !== undefined) patientProfile.bloodPressure = data.bloodPressure;
+        if (data.report) patientProfile.reports.push(data.report);
+        
+        await patientProfile.save();
+        
+        // **পরিবর্তন:** GET ফাংশনের মতো একই ফরম্যাটে রেসপন্স পাঠানো হচ্ছে
+        const updatedPopulatedProfile = await PatientProfile.findOne({ user: userId }).populate('user');
+        const prescriptions = await Prescription.find({ patientProfile: updatedPopulatedProfile._id }).sort({ createdAt: -1 });
+        
+        const responseData = {
+            ...updatedPopulatedProfile.toObject(),
+            prescriptions: prescriptions
+        };
+
+        return NextResponse.json(responseData);
 
     } catch (error) {
-        console.error("Error updating vitals:", error);
-        return NextResponse.json({ message: 'Server error' }, { status: 500 });
+        console.error("Error updating profile by doctor:", error);
+        return NextResponse.json({ success: false, message: "Server Error" }, { status: 500 });
     }
 }

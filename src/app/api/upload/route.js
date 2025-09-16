@@ -1,26 +1,46 @@
 // src/app/api/upload/route.js
 import { NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
-import path from 'path';
+import { v2 as cloudinary } from 'cloudinary';
+import { Readable } from 'stream';
+
+cloudinary.config({ 
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+  api_key: process.env.CLOUDINARY_API_KEY, 
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true
+});
+
+const uploadFromBuffer = (buffer) => {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream({ resource_type: "auto" }, (error, result) => {
+            if (result) resolve(result);
+            else reject(error);
+        });
+        Readable.from(buffer).pipe(uploadStream);
+    });
+};
 
 export async function POST(request) {
-    const data = await request.formData();
-    const file = data.get('file');
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file');
 
     if (!file) {
-        return NextResponse.json({ message: "No file uploaded." }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'No file found.' }, { status: 400 });
     }
 
-    // ফাইলটিকে বাইটে রূপান্তর
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    const uploadResult = await uploadFromBuffer(buffer);
 
-    // public ফোল্ডারে একটি ইউনিক নামে ফাইল সেভ করা
-    const filename = `${Date.now()}_${file.name}`;
-    const filePath = path.join(process.cwd(), 'public', 'uploads', filename);
-    await writeFile(filePath, buffer);
+    return NextResponse.json({ 
+      success: true, 
+      url: uploadResult.secure_url, 
+      fileName: file.name 
+    });
 
-    // ক্লায়েন্টকে ছবির URL পাঠানো
-    const publicUrl = `/uploads/${filename}`;
-    return NextResponse.json({ message: "File uploaded successfully.", url: publicUrl }, { status: 200 });
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error);
+    return NextResponse.json({ success: false, message: 'File upload failed.' }, { status: 500 });
+  }
 }

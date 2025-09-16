@@ -1,0 +1,245 @@
+// src/app/api/prescriptions/[id]/pdf/route.js
+
+import dbConnect from '@/lib/dbConnect';
+import PatientProfile from '@/models/PatientProfile.model';
+import Prescription from '@/models/Prescription.model';
+import User from '@/models/User.model'; // ডাক্তারের முழு விவரের জন্য User মডেল
+import { NextResponse } from 'next/server';
+import puppeteer from 'puppeteer';
+import QRCode from 'qrcode'; // QR কোড তৈরির জন্য
+
+// নতুন ডিজাইন অনুযায়ী HTML টেমপ্লেট
+const getHtmlTemplate = (prescription, patient, doctor, qrCodeDataURL) => {
+    const medicinesHtml = prescription.medications.map(med => `
+        <tr>
+            <td>${med.medicationName}</td>
+            <td>${med.dosage}</td>
+        </tr>
+    `).join('');
+
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Prescription - ${patient.user.name}</title>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+                body {
+                    font-family: 'Roboto', sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #fff;
+                    color: #333;
+                    font-size: 14px;
+                }
+                .page {
+                    width: 210mm;
+                    height: 297mm;
+                    padding: 15mm;
+                    box-sizing: border-box;
+                    position: relative;
+                    overflow: hidden;
+                }
+                .header-bg {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    width: 40%;
+                    height: 120px;
+                    background-color: #0d2c4b;
+                    clip-path: polygon(100% 0, 100% 100%, 25% 100%, 0 0);
+                }
+                .header-accent {
+                    position: absolute;
+                    top: 0;
+                    right: 25%;
+                    width: 20%;
+                    height: 100px;
+                    background-color: #1e88e5;
+                    clip-path: polygon(100% 0, 100% 100%, 25% 100%, 0 0);
+                }
+                .header-content {
+                    position: relative;
+                    z-index: 10;
+                    padding: 20px 0;
+                }
+                .doctor-name {
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: #0d2c4b;
+                }
+                .doctor-qual {
+                    font-size: 16px;
+                    color: #555;
+                    margin-top: 4px;
+                }
+                .patient-info {
+                    margin-top: 30px;
+                    padding-bottom: 15px;
+                    border-bottom: 1px solid #eee;
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 10px 20px;
+                }
+                .info-item { display: flex; }
+                .info-item strong { width: 80px; }
+                .rx-section { margin-top: 20px; }
+                .rx-symbol {
+                    font-size: 4em;
+                    font-weight: bold;
+                    color: #1e88e5;
+                    float: left;
+                    margin-right: 15px;
+                }
+                .medication-table {
+                    width: calc(100% - 70px);
+                    border-collapse: collapse;
+                    float: left;
+                }
+                .medication-table th, .medication-table td {
+                    text-align: left;
+                    padding: 8px;
+                    border-bottom: 1px solid #f0f0f0;
+                }
+                .medication-table th { font-weight: 500; color: #333; }
+                .notes-reports {
+                    clear: both;
+                    padding-top: 20px;
+                    margin-top: 20px;
+                    border-top: 1px solid #eee;
+                }
+                .footer {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100px;
+                    overflow: hidden;
+                }
+                .footer-bg {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 40%;
+                    height: 120px;
+                    background-color: #0d2c4b;
+                    clip-path: polygon(0 100%, 75% 0, 100% 0, 100% 100%);
+                }
+                .footer-accent {
+                    position: absolute;
+                    bottom: 0;
+                    left: 25%;
+                    width: 20%;
+                    height: 100px;
+                    background-color: #1e88e5;
+                    clip-path: polygon(0 100%, 75% 0, 100% 0, 100% 100%);
+                }
+                .footer-content {
+                    position: absolute;
+                    bottom: 15mm;
+                    right: 15mm;
+                    text-align: right;
+                }
+                .signature { margin-bottom: 5px; }
+                .contact-info { font-size: 12px; }
+                .qr-code { position: absolute; top: 15mm; right: 15mm; }
+            </style>
+        </head>
+        <body>
+            <div class="page">
+                <div class="header-bg"></div>
+                <div class="header-accent"></div>
+                <img src="${qrCodeDataURL}" alt="QR Code" class="qr-code" width="80" height="80">
+                
+                <div class="header-content">
+                    <div class="doctor-name">Dr. ${doctor.name}</div>
+                    <div class="doctor-qual">${doctor.qualification || 'Doctor Qualification'}</div>
+                </div>
+
+                <div class="patient-info">
+                    <div class="info-item"><strong>Patient:</strong> ${patient.user.name}</div>
+                    <div class="info-item"><strong>Date:</strong> ${new Date(prescription.createdAt).toLocaleDateString()}</div>
+                    <div class="info-item"><strong>Age:</strong> ${patient.age || 'N/A'}</div>
+                    <div class="info-item"><strong>Weight:</strong> ${patient.weight ? `${patient.weight} KG` : 'N/A'}</div>
+                    <div class="info-item"><strong>Gender:</strong> ${patient.gender || 'N/A'}</div>
+                    <div class="info-item"><strong>Diagnosis:</strong> ${patient.diagnosis || 'N/A'}</div>
+                </div>
+
+                <div class="rx-section">
+                    <div class="rx-symbol">℞</div>
+                    <table class="medication-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Dosage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${medicinesHtml}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="notes-reports">
+                    ${prescription.generalNotes ? `<p><strong>Notes:</strong> ${prescription.generalNotes}</p>` : ''}
+                    ${(prescription.suggestedReports && prescription.suggestedReports.length > 0) ? `<p><strong>Reports:</strong> ${prescription.suggestedReports.join(', ')}</p>` : ''}
+                </div>
+
+                <div class="footer">
+                    <div class="footer-bg"></div>
+                    <div class="footer-accent"></div>
+                    <div class="footer-content">
+                        <div class="signature">_________________________<br><strong>Signature</strong></div>
+                        <div class="contact-info">
+                            ${doctor.address || '24 Dummy Street Area'}<br>
+                            ${doctor.phone || '+12-345 678 9012'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+};
+
+export async function GET(request, { params }) {
+    try {
+        const { id } = params;
+        await dbConnect();
+
+        const prescription = await Prescription.findById(id).lean();
+        if (!prescription) return NextResponse.json({ message: "Prescription not found" }, { status: 404 });
+        
+        const patient = await PatientProfile.findById(prescription.patientProfile).populate('user', 'name').lean();
+        if (!patient) return NextResponse.json({ message: "Patient profile not found" }, { status: 404 });
+
+        // ডাক্তারের সম্পূর্ণ তথ্য User মডেল থেকে আনা হচ্ছে
+        const doctor = await User.findById(prescription.doctor).select('name qualification address phone').lean();
+        if (!doctor) return NextResponse.json({ message: "Doctor not found" }, { status: 404 });
+        
+        // QR কোড তৈরি
+        const prescriptionUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/prescriptions/${id}`; // উদাহরণ URL
+        const qrCodeDataURL = await QRCode.toDataURL(prescriptionUrl);
+
+        const browser = await puppeteer.launch({ headless: true });
+        const page = await browser.newPage();
+        
+        const htmlContent = getHtmlTemplate(prescription, patient, doctor, qrCodeDataURL);
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+        const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+        await browser.close();
+
+        return new NextResponse(pdfBuffer, {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': `attachment; filename="prescription-${patient.user.name.replace(/\s/g, '_')}-${id}.pdf"`,
+            },
+        });
+    } catch (error) {
+        console.error("PDF generation error:", error);
+        return NextResponse.json({ message: 'Server error during PDF generation' }, { status: 500 });
+    }
+}

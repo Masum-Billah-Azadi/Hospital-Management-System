@@ -1,75 +1,80 @@
 // src/components/dashboard/RightSidebar.js
 "use client";
 
-import { useState, useEffect } from 'react'; // useState, useEffect ইম্পোর্ট করুন
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import PatientChart from './PatientChart';
 import styles from './RightSidebar.module.scss';
 
-// Temporary dummy data for patients
-const lastPatients = [
-    { name: 'Arya Wijaya Kusuma', date: 'Jan 28, 2020', time: '9 AM - 11 AM', image: '/avatars/avatar-1.jpg' },
-    { name: 'Sherly Indriani', date: 'Jan 27, 2020', time: '10 AM - 11 AM', image: '/avatars/avatar-2.jpg' },
-    { name: 'Nafiu efandiyar mauludy', date: 'Jan 26, 2020', time: '7 AM - 9 AM', image: '/avatars/avatar-3.jpg' },
-];
-
 const RightSidebar = () => {
     const { data: session } = useSession();
-    const [profile, setProfile] = useState(null); // প্রোফাইল ডেটার জন্য স্টেট
+    const [doctorProfile, setDoctorProfile] = useState(null);
+    const [recentPatients, setRecentPatients] = useState([]); // **নতুন:** 최근 환자 목록을 위한 상태
 
     useEffect(() => {
-        // সেশন থাকলে প্রোফাইল ডেটা fetch করুন
         if (session) {
-            fetch('/api/profile/doctor')
-                .then(res => res.json())
-                .then(data => {
-                    setProfile(data);
-                });
+            // **পরিবর্তন:** ড্যাশবোর্ডের নতুন API থেকে ডেটা আনা হচ্ছে
+            const fetchDashboardData = async () => {
+                try {
+                    const res = await fetch('/api/dashboard/doctor');
+                    if (res.ok) {
+                        const data = await res.json();
+                        setDoctorProfile(data.doctorProfile); // ডাক্তারের প্রোফাইল সেট করা
+                        setRecentPatients(data.recentPatients || []); // **নতুন:** সাম্প্রতিক রোগীদের ডেটা সেট করা
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch dashboard data for sidebar", error);
+                }
+            };
+            fetchDashboardData();
         }
-    }, [session]); // সেশন পরিবর্তন হলে আবার fetch করবে
+    }, [session]);
 
     return (
         <aside className={styles.rightSidebar}>
             {/* My Profile Section */}
             <div className={styles.profileCard}>
-                <h3>My Profile</h3>
                 <div className={styles.profileDetails}>
                     <Image
                         src={session?.user?.image || `https://ui-avatars.com/api/?name=${session?.user?.name}`}
                         alt="Profile"
-                        width={60}
-                        height={60}
+                        width={80}
+                        height={80}
                         className={styles.profileImage}
                     />
                     <h4>Dr. {session?.user?.name}</h4>
-                    {/* Designation এখন ডাইনামিক */}
-                    <p>{profile?.designation || 'Loading...'}</p>
+                    {/* **পরিবর্তন:** Designation এখন DoctorProfile থেকে আসবে */}
+                    <p>{doctorProfile?.designation || 'Specialty'}</p>
                 </div>
             </div>
 
             {/* Last Patient Section */}
             <div className={styles.lastPatientCard}>
                 <div className={styles.cardHeader}>
-                    <h3>Last Patient</h3>
-                    <a href="#">View All</a>
+                    <h3>Last Patients</h3>
+                    <Link href="/dashboard/patients">View All</Link>
                 </div>
                 <ul className={styles.patientList}>
-                    {lastPatients.map((patient, index) => (
-                        <li key={index} className={styles.patientItem}>
+                    {/* **পরিবর্তন:** recentPatients থেকে ডাইনামিকভাবে তালিকা তৈরি হচ্ছে */}
+                    {recentPatients.length > 0 ? recentPatients.map(patient => (
+                        <li key={patient._id} className={styles.patientItem}>
                             <Image
-                                src={patient.image}
-                                alt={patient.name}
+                                src={patient.user?.image || `https://ui-avatars.com/api/?name=${patient.user?.name}`}
+                                alt={patient.user?.name}
                                 width={40}
                                 height={40}
                                 className={styles.patientImage}
                             />
                             <div className={styles.patientInfo}>
-                                <h4>{patient.name}</h4>
-                                <p>{patient.date} • {patient.time}</p>
+                                <h4>{patient.user?.name}</h4>
+                                <p>Last visit: {new Date(patient.updatedAt).toLocaleDateString()}</p>
                             </div>
                         </li>
-                    ))}
+                    )) : (
+                        <p className={styles.noPatients}>No recent patients.</p>
+                    )}
                 </ul>
             </div>
             <PatientChart />
