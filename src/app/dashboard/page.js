@@ -1,21 +1,35 @@
 // src/app/dashboard/page.js
 "use client";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import styles from './Dashboard.module.scss';
-import Link from "next/link";
-import Image from "next/image";
 
 // Stat Card কম্পোনেন্ট (একই ফাইলের ভেতরে রাখা হলো)
-const StatCard = ({ title, value, icon }) => (
-    <div className={styles.statCard}>
-        <div className={styles.iconWrapper}>{icon}</div>
-        <div className={styles.statInfo}>
-            <p>{title}</p>
-            <span>{value}</span>
+const StatCard = ({ title, value, icon, link }) => {
+    const cardContent = (
+        <div className={styles.statCard}>
+            <div className={styles.iconWrapper}>{icon}</div>
+            <div className={styles.statInfo}>
+                <p>{title}</p>
+                {/* শুধুমাত্র value থাকলেই সেটি দেখানো হবে */}
+                {value !== undefined && <span>{value}</span>}
+            </div>
         </div>
-    </div>
-);
+    );
+
+    // যদি লিঙ্ক থাকে, তাহলে কার্ডটিকে একটি clickable লিঙ্কে পরিণত করা হবে
+    if (link) {
+        return (
+            <a href={link} target="_blank" rel="noopener noreferrer" className={styles.cardLink}>
+                {cardContent}
+            </a>
+        );
+    }
+
+    return cardContent;
+};
 
 const DoctorDashboardPage = () => {
     const { data: session } = useSession();
@@ -44,13 +58,34 @@ const DoctorDashboardPage = () => {
     return (
         <div className={styles.dashboardContainer}>
             <header className={styles.header}>
-                <h1>Welcome, Dr. {session?.user?.name?.split(' ')[0]}</h1>
-                <p>Have a nice day at work</p>
+                <div>
+                    <h2>Dashboard</h2>
+                    <p className={styles.currentDate}>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
             </header>
+            <div className={styles.welcomeBanner}>
+                <div className={styles.bannerText}>
+                    <h2>Welcome, Dr. {session?.user?.name || 'User'}</h2>
+                    <p>Have a nice day at work</p>
+                </div>
+            </div>
 
             <section className={styles.statsGrid}>
-                <StatCard title="Today's Appointments" value={dashboardData?.stats?.todaysAppointmentsCount || 0} icon={"📅"} />
-                <StatCard title="Total Patients" value={dashboardData?.stats?.totalPatientsCount || 0} icon={"👥"} />
+                <StatCard 
+                    title="Today's Appointments" 
+                    value={dashboardData?.stats?.todaysAppointmentsCount || 0} 
+                    icon={"📅"} 
+                />
+                <StatCard 
+                    title="Total Patients" 
+                    value={dashboardData?.stats?.totalPatientsCount || 0} 
+                    icon={"👥"} 
+                />
+                <StatCard 
+                    title="Blood Bank & Donation" 
+                    icon={"🩸"}
+                    link="http://anirban.lovestoblog.com/"
+                />
             </section>
 
             <section className={styles.appointmentsSection}>

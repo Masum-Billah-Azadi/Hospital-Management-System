@@ -2,46 +2,132 @@
 .dashboardContainer {
   padding: 2rem;
 }
-
 .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 2rem;
-  h1 {
-    font-size: 2.2rem;
-    font-weight: 600;
-    color: #2c3e50;
+
+  h2 {
     margin: 0;
+    font-size: 2rem;
+    color: #2c3e50;
   }
-  p {
-    font-size: 1.1rem;
+
+  .currentDate {
+    margin: 0;
     color: #7f8c8d;
+  }
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+
+  button {
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .historyButton {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    color: #555;
+    &:hover {
+      background-color: #f8f8f8;
+    }
+  }
+
+  .addButton {
+    background-color: #4a6ee0;
+    color: white;
+    &:hover {
+      background-color: #3a5ac0;
+    }
+  }
+}
+
+/* --- নতুন ওয়েলকাম ব্যানার স্টাইল --- */
+.welcomeBanner {
+  background-color: #4a6ee0;
+  color: white;
+  border-radius: 16px;
+  padding: 2rem 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  position: relative;
+  overflow: hidden;
+
+  .bannerText {
+    h2 {
+      margin: 0;
+      font-size: 2.2rem;
+      font-weight: 700;
+    }
+    p {
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
   }
 }
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  /* পরিবর্তন: grid-template-columns আপডেট করা হয়েছে */
+  grid-template-columns: repeat(3, 1fr); /* তিনটি সমান কলাম তৈরি করবে */
   gap: 1.5rem;
   margin-bottom: 2.5rem;
+
+  .iconWrapper {
+    font-size: 2.5rem; // **পরিবর্তন:** 2rem থেকে 2.5rem করা হয়েছে
+    color: #4a6ee0;
+    height: 50px; // **পরিবর্তন:** 60px থেকে 70px করা হয়েছে
+    width: 50px; // **পরিবর্তন:** 60px থেকে 70px করা হয়েছে
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+  }
+}
+
+/* ছোট স্ক্রিনের জন্য (ঐচ্ছিক কিন্তু প্রস্তাবিত) */
+@media (max-width: 992px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cardLink {
+  text-decoration: none; // লিঙ্কের আন্ডারলাইন সরানোর জন্য
+  color: inherit; // টেক্সটের রঙ ঠিক রাখার জন্য
 }
 
 .statCard {
   background-color: #fff;
+  height: -webkit-fill-available;
   padding: 1.5rem;
   border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 1.5rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 
-  .iconWrapper {
-    font-size: 2rem;
-    background-color: #f0f4ff;
-    color: #4a6ee0;
-    height: 60px;
-    width: 60px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
   }
 
   .statInfo {

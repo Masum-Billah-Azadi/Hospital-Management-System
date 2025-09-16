@@ -23,6 +23,7 @@ const PatientProfilePage = () => {
     const [medications, setMedications] = useState([{ medicationName: '', dosage: '', notes: '' }]);
     const [generalNotes, setGeneralNotes] = useState('');
     const [suggestedReports, setSuggestedReports] = useState('');
+    
 
     // **নতুন:** রিপোর্ট আপলোডের জন্য State
     const [isUploading, setIsUploading] = useState(false);
@@ -62,21 +63,25 @@ const PatientProfilePage = () => {
     };
 
     const handleVitalsSave = async () => {
-        try {
-            const res = await fetch(`/api/patients/${patientId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(vitalsData),
-            });
-            if (!res.ok) throw new Error('Failed to update vitals.');
-            const updatedProfile = await res.json();
-            setPatientData(prev => ({ ...prev, ...updatedProfile.profile }));
-            setIsEditingVitals(false);
-        } catch (error) {
-            console.error(error);
-            alert('Error updating vitals.');
-        }
-    };
+    try {
+        const res = await fetch(`/api/patients/${patientId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(vitalsData),
+        });
+        if (!res.ok) throw new Error('Failed to update vitals.');
+
+        // **পরিবর্তন:** সরাসরি নতুন ডেটা দিয়ে state আপডেট করা হচ্ছে
+        const updatedData = await res.json();
+        setPatientData(updatedData);
+        
+        setIsEditingVitals(false);
+        alert("Vitals updated successfully!");
+    } catch (error) {
+        console.error(error);
+        alert('Error updating vitals.');
+    }
+};
 
     // **নতুন:** ডাইনামিক মেডিসিন ফিল্ড পরিবর্তনের জন্য হ্যান্ডলার
     const handleMedicationChange = (index, e) => {
@@ -96,51 +101,40 @@ const PatientProfilePage = () => {
         setMedications(updatedMedications);
     };
     
-    // **নতুন:** রিপোর্ট আপলোড হ্যান্ডলার
-const handleReportUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+const handleReportUploadByDoctor = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
 
-    try {
-        // ধাপ ১: Cloudinary-তে ফাইল আপলোড
-        const uploadRes = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData,
-        });
-        if (!uploadRes.ok) throw new Error('File upload failed.');
-        
-        const uploadData = await uploadRes.json();
-        
-        if (uploadData.success) {
-            // ধাপ ২: নির্ভরযোগ্য PATCH রুটে রিপোর্ট ডেটা পাঠানো
-            const saveToDbRes = await fetch(`/api/patients/${patientId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    reports: [{ // অ্যারে হিসেবে পাঠানো হচ্ছে
-                        fileName: uploadData.fileName,
-                        url: uploadData.url,
-                    }]
-                }),
-            });
-
-            if (!saveToDbRes.ok) throw new Error('Failed to save report to profile.');
+        try {
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+            if (!uploadRes.ok) throw new Error('File upload failed.');
+            const uploadData = await uploadRes.json();
             
-            const data = await saveToDbRes.json();
-            setPatientData(data.profile); // আপডেটেড প্রোফাইল দিয়ে UI আপডেট
+            if (uploadData.success) {
+                const saveToDbRes = await fetch(`/api/patients/${patientId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        report: { fileName: uploadData.fileName, url: uploadData.url }
+                    }),
+                });
+                if (!saveToDbRes.ok) throw new Error('Failed to save report.');
+                
+                const updateData = await saveToDbRes.json();
+                setPatientData(updateData); // UI আপডেট
+                alert("Report added successfully!");
+            }
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            setIsUploading(false);
+            e.target.value = null;
         }
-    } catch (error) {
-        console.error(error);
-        alert(error.message);
-    } finally {
-        setIsUploading(false);
-        e.target.value = null;
-    }
-};
+    };
 
 // ... আপনার বাকি সব কোড অপরিবর্তিত থাকবে ...
 
@@ -183,7 +177,7 @@ const handleReportUpload = async (e) => {
     if (loading) return <div>Loading patient profile...</div>;
     if (!patientData) return <div>Patient profile not found.</div>;
 
-    const { user, prescriptions, reports } = patientData; // রোগীর ডেটা থেকে 'reports' নেওয়া হচ্ছে
+    const { user, prescriptions, reports } = patientData;
 
     return (
         <div className={styles.container}>
@@ -301,34 +295,29 @@ const handleReportUpload = async (e) => {
                 <div className={styles.card}>
                     <div className={styles.cardTitle}>
                         <h2>Reports</h2>
-                        {/* একটি লেবেলকে বাটনের মতো করে দেখানো হচ্ছে */}
-                        <label htmlFor="report-upload" className={styles.editButton}>
-                            {isUploading ? 'Uploading...' : 'Upload New'}
+                        <label htmlFor="report-upload-doctor" className={styles.editButton}>
+                            {isUploading ? 'Uploading...' : 'Upload New Report'}
                         </label>
                         <input 
                             type="file" 
-                            id="report-upload" 
-                            onChange={handleReportUpload} 
+                            id="report-upload-doctor" 
+                            onChange={handleReportUploadByDoctor} 
                             disabled={isUploading}
-                            style={{ display: 'none' }} // আসল ইনপুটটি লুকানো থাকবে
-                            accept="image/png, image/jpeg, image/jpg, application/pdf" // ফাইলের ধরন নির্দিষ্ট করা
+                            style={{ display: 'none' }}
+                            accept="image/*, application/pdf"
                         />
                     </div>
-                    
                     <div className={styles.reportsList}>
-                        {/* patientData থেকে রিপোর্টগুলো দেখানো হচ্ছে */}
-                        {(patientData.reports && patientData.reports.length > 0) ? (
+                        {(reports && reports.length > 0) ? (
                             <ul>
-                                {patientData.reports.map((report, index) => (
+                                {reports.map((report, index) => (
                                     <li key={index}>
-                                        <a href={report.url} target="_blank" rel="noopener noreferrer">
-                                            {report.fileName}
-                                        </a>
+                                        <a href={report.url} target="_blank" rel="noopener noreferrer">{report.fileName}</a>
                                     </li>
                                 ))}
                             </ul>
                         ) : (
-                            <p>No reports uploaded yet.</p>
+                            <p>No reports uploaded for this patient.</p>
                         )}
                     </div>
                 </div>

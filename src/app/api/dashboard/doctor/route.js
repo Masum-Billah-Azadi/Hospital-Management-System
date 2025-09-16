@@ -1,3 +1,4 @@
+// src/app/api/dashboard/doctor/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -38,11 +39,21 @@ export async function GET(request) {
             todaysAppointmentsCount: todaysAppointments.length,
             totalPatientsCount: totalPatients,
         };
+        // **নতুন:** সম্প্রতি যুক্ত হওয়া রোগীদের খোঁজা হচ্ছে
+        const recentPatients = await PatientProfile.find({ doctors: doctorId })
+            .sort({ updatedAt: -1 }) // সর্বশেষ আপডেট হওয়া রোগীরা আগে আসবে
+            .limit(3) // শুধুমাত্র শেষ ৩ জন রোগী
+            .populate({
+                path: 'user',
+                model: User,
+                select: 'name image'
+            });
 
         return NextResponse.json({
             success: true,
             stats,
             todaysAppointments,
+            recentPatients, // **নতুন:** রেসপন্সে নতুন ডেটা যোগ করা হয়েছে
         });
 
     } catch (error) {
