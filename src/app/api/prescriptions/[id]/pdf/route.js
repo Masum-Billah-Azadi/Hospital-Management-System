@@ -1,13 +1,12 @@
 // src/app/api/prescriptions/[id]/pdf/route.js
-
 import dbConnect from '@/lib/dbConnect';
 import PatientProfile from '@/models/PatientProfile.model';
 import Prescription from '@/models/Prescription.model';
-import User from '@/models/User.model'; // ডাক্তারের முழு விவரের জন্য User মডেল
+import User from '@/models/User.model';
 import chromium from '@sparticuz/chromium';
 import { NextResponse } from 'next/server';
-import puppeteer from 'puppeteer-core'; // puppeteer থেকে puppeteer-core
-import QRCode from 'qrcode'; // QR কোড তৈরির জন্য
+import puppeteer from 'puppeteer-core';
+import QRCode from 'qrcode';
 
 // নতুন ডিজাইন অনুযায়ী HTML টেমপ্লেট
 const getHtmlTemplate = (prescription, patient, doctor, qrCodeDataURL) => {
@@ -210,6 +209,7 @@ export async function GET(request, { params }) {
         const { id } = params;
         await dbConnect();
 
+        // ডেটা খোঁজার কোড অপরিবর্তিত
         const prescription = await Prescription.findById(id).lean();
         if (!prescription) return NextResponse.json({ message: "Prescription not found" }, { status: 404 });
         
@@ -219,20 +219,19 @@ export async function GET(request, { params }) {
         const doctor = await User.findById(prescription.doctor).select('name qualification').lean();
         if (!doctor) return NextResponse.json({ message: "Doctor not found" }, { status: 404 });
         
-        // **পরিবর্তন:** রোগীর প্রোফাইল URL তৈরি করা হচ্ছে
         const patientProfileUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/patients/${patient.user._id}`;
         const qrCodeDataURL = await QRCode.toDataURL(patientProfileUrl);
-
+        
+        // **চূড়ান্ত সমাধান:** পরিবেশ অনুযায়ী সঠিক পাথ নির্ধারণ
         const executablePath = process.env.NODE_ENV === 'production'
             ? await chromium.executablePath()
-            : 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
+            : 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'; // আপনার দেওয়া সঠিক পাথ
 
         browser = await puppeteer.launch({
             args: chromium.args,
             defaultViewport: chromium.defaultViewport,
-            executablePath,
+            executablePath: executablePath,
             headless: process.env.NODE_ENV === 'production' ? chromium.headless : true,
-            ignoreHTTPSErrors: true,
         });
 
         const page = await browser.newPage();
