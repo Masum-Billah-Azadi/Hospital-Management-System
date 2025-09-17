@@ -24,6 +24,7 @@
 .logoutButton {
   background-color: #e74c3c;
   color: white;
+  width: 150px;
   border: none;
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
@@ -31,6 +32,19 @@
   font-weight: 500;
   &:hover {
     background-color: #c0392b;
+  }
+}
+.AdminButton {
+  background-color: #02aecc;
+  color: white;
+  width: 150px;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  &:hover {
+    background-color: #018d97;
   }
 }
 

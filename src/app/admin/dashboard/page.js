@@ -1,7 +1,7 @@
 // src/app/admin/dashboard/page.js
 "use client";
-import { useEffect, useState } from 'react';
 import { signOut } from 'next-auth/react';
+import { useEffect, useState } from 'react';
 import styles from './AdminDashboard.module.scss'; // SCSS ফাইল তৈরি করতে হবে
 
 const AdminDashboard = () => {
@@ -43,6 +43,12 @@ const AdminDashboard = () => {
                 >
                     Logout
                 </button>
+                <button className={styles.AdminButton}>
+                    <a href="http://anirban.lovestoblog.com/admin/login.php" target="_blank" rel="noopener noreferrer">
+                            Blood Bank Admin
+                        </a>
+                </button>
+                
             </div>
             <table className={styles.userTable}>
                 <thead>
