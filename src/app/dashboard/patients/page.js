@@ -32,7 +32,7 @@ const MyPatientsPage = () => {
         <div className={styles.container}>
             <div className={styles.header}>
                 <h1>My Patient List</h1>
-                <button className={styles.addButton}>Add New Patient</button>
+                {/* <button className={styles.addButton}>Add New Patient</button> */}
             </div>
             
             <div className={styles.tableContainer}>
