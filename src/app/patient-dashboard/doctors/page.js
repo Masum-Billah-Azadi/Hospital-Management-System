@@ -25,7 +25,7 @@ const FindDoctorsPage = () => {
         setLoading(true);
         try {
             // API URL-এ দুটি প্যারামিটারই যোগ করা হয়েছে
-            const res = await fetch(`/api/doctors?designation=${selectedDesignation}&name=${searchTerm}`);
+            const res = await fetch(`/api/doctors?designation=${encodeURIComponent(selectedDesignation)}&name=${encodeURIComponent(searchTerm)}`);
             const data = await res.json();
             setDoctorProfiles(data.filter(profile => profile.user));
         } catch (error) {

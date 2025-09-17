@@ -15,6 +15,24 @@
     border-bottom: 1px solid #ecf0f1;
   }
 }
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logoutButton {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  &:hover {
+    background-color: #c0392b;
+  }
+}
 
 .userTable {
   width: 100%;
