@@ -3,9 +3,7 @@ import dbConnect from '@/lib/dbConnect';
 import PatientProfile from '@/models/PatientProfile.model';
 import Prescription from '@/models/Prescription.model';
 import User from '@/models/User.model';
-import chromium from '@sparticuz/chromium';
 import { NextResponse } from 'next/server';
-import puppeteer from 'puppeteer-core';
 import QRCode from 'qrcode';
 
 // নতুন ডিজাইন অনুযায়ী HTML টেমপ্লেট
@@ -204,12 +202,11 @@ const getHtmlTemplate = (prescription, patient, doctor, qrCodeDataURL) => {
 };
 
 export async function GET(request, { params }) {
-    let browser = null;
     try {
         const { id } = params;
         await dbConnect();
 
-        // ডেটা খোঁজার কোড অপরিবর্তিত
+        // ডেটা খোঁজার কোড
         const prescription = await Prescription.findById(id).lean();
         if (!prescription) return NextResponse.json({ message: "Prescription not found" }, { status: 404 });
         
@@ -221,25 +218,34 @@ export async function GET(request, { params }) {
         
         const patientProfileUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/patients/${patient.user._id}`;
         const qrCodeDataURL = await QRCode.toDataURL(patientProfileUrl);
-        
-        // **চূড়ান্ত সমাধান:** পরিবেশ অনুযায়ী সঠিক পাথ নির্ধারণ
-        const executablePath = process.env.NODE_ENV === 'production'
-            ? await chromium.executablePath()
-            : 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'; // আপনার দেওয়া সঠিক পাথ
 
-        browser = await puppeteer.launch({
-            args: chromium.args,
-            defaultViewport: chromium.defaultViewport,
-            executablePath: executablePath,
-            headless: process.env.NODE_ENV === 'production' ? chromium.headless : true,
+        const htmlContent = getHtmlTemplate(prescription, patient, doctor, qrCodeDataURL);
+
+        // **PDFShift API কল**
+        const authString = `api:${process.env.PDFSHIFT_API_KEY}`;
+        const apiKey = Buffer.from(authString).toString('base64');
+
+        const response = await fetch('https://api.pdfshift.io/v3/convert/pdf', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                source: htmlContent,
+                landscape: false,
+                use_print: false,
+            })
         });
 
-        const page = await browser.newPage();
-        const htmlContent = getHtmlTemplate(prescription, patient, doctor, qrCodeDataURL);
-        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+        if (!response.ok) {
+            const errorBody = await response.json();
+            console.error("PDFShift API Error:", errorBody);
+            throw new Error(`PDFShift API failed with status: ${response.status}`);
+        }
 
-        const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-        
+        const pdfBuffer = await response.arrayBuffer();
+
         return new NextResponse(pdfBuffer, {
             status: 200,
             headers: {
@@ -247,12 +253,9 @@ export async function GET(request, { params }) {
                 'Content-Disposition': `attachment; filename="prescription-${id}.pdf"`,
             },
         });
+
     } catch (error) {
-        console.error("PDF generation error:", error);
+        console.error("PDF generation error with PDFShift:", error);
         return NextResponse.json({ message: 'Server error during PDF generation' }, { status: 500 });
-    } finally {
-        if (browser !== null) {
-            await browser.close();
-        }
     }
 }
