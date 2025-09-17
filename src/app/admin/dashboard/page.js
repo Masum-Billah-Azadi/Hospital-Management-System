@@ -1,6 +1,7 @@
 // src/app/admin/dashboard/page.js
 "use client";
 import { useEffect, useState } from 'react';
+import { signOut } from 'next-auth/react';
 import styles from './AdminDashboard.module.scss'; // SCSS ফাইল তৈরি করতে হবে
 
 const AdminDashboard = () => {
@@ -34,7 +35,15 @@ const AdminDashboard = () => {
 
     return (
         <div className={styles.container}>
-            <h1>Admin Dashboard - User Management</h1>
+            <div className={styles.header}> {/* **নতুন:** হেডার সেকশন */}
+                <h1>Admin Dashboard - User Management</h1>
+                <button 
+                    onClick={() => signOut({ callbackUrl: '/' })} 
+                    className={styles.logoutButton}
+                >
+                    Logout
+                </button>
+            </div>
             <table className={styles.userTable}>
                 <thead>
                     <tr>

@@ -4,8 +4,9 @@ import dbConnect from '@/lib/dbConnect';
 import PatientProfile from '@/models/PatientProfile.model';
 import Prescription from '@/models/Prescription.model';
 import User from '@/models/User.model'; // ডাক্তারের முழு விவரের জন্য User মডেল
+import chromium from '@sparticuz/chromium';
 import { NextResponse } from 'next/server';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core'; // puppeteer থেকে puppeteer-core
 import QRCode from 'qrcode'; // QR কোড তৈরির জন্য
 
 // নতুন ডিজাইন অনুযায়ী HTML টেমপ্লেট
@@ -204,6 +205,7 @@ const getHtmlTemplate = (prescription, patient, doctor, qrCodeDataURL) => {
 };
 
 export async function GET(request, { params }) {
+    let browser = null;
     try {
         const { id } = params;
         await dbConnect();
@@ -211,35 +213,47 @@ export async function GET(request, { params }) {
         const prescription = await Prescription.findById(id).lean();
         if (!prescription) return NextResponse.json({ message: "Prescription not found" }, { status: 404 });
         
-        const patient = await PatientProfile.findById(prescription.patientProfile).populate('user', 'name').lean();
+        const patient = await PatientProfile.findById(prescription.patientProfile).populate('user', '_id name').lean();
         if (!patient) return NextResponse.json({ message: "Patient profile not found" }, { status: 404 });
 
-        // ডাক্তারের সম্পূর্ণ তথ্য User মডেল থেকে আনা হচ্ছে
-        const doctor = await User.findById(prescription.doctor).select('name qualification address phone').lean();
+        const doctor = await User.findById(prescription.doctor).select('name qualification').lean();
         if (!doctor) return NextResponse.json({ message: "Doctor not found" }, { status: 404 });
         
-        // QR কোড তৈরি
-        const prescriptionUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/prescriptions/${id}`; // উদাহরণ URL
-        const qrCodeDataURL = await QRCode.toDataURL(prescriptionUrl);
+        // **পরিবর্তন:** রোগীর প্রোফাইল URL তৈরি করা হচ্ছে
+        const patientProfileUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/patients/${patient.user._id}`;
+        const qrCodeDataURL = await QRCode.toDataURL(patientProfileUrl);
 
-        const browser = await puppeteer.launch({ headless: true });
+        const executablePath = process.env.NODE_ENV === 'production'
+            ? await chromium.executablePath()
+            : 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
+
+        browser = await puppeteer.launch({
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath,
+            headless: process.env.NODE_ENV === 'production' ? chromium.headless : true,
+            ignoreHTTPSErrors: true,
+        });
+
         const page = await browser.newPage();
-        
         const htmlContent = getHtmlTemplate(prescription, patient, doctor, qrCodeDataURL);
         await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
         const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-        await browser.close();
-
+        
         return new NextResponse(pdfBuffer, {
             status: 200,
             headers: {
                 'Content-Type': 'application/pdf',
-                'Content-Disposition': `attachment; filename="prescription-${patient.user.name.replace(/\s/g, '_')}-${id}.pdf"`,
+                'Content-Disposition': `attachment; filename="prescription-${id}.pdf"`,
             },
         });
     } catch (error) {
         console.error("PDF generation error:", error);
         return NextResponse.json({ message: 'Server error during PDF generation' }, { status: 500 });
+    } finally {
+        if (browser !== null) {
+            await browser.close();
+        }
     }
 }

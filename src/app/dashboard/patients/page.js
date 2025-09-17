@@ -1,9 +1,9 @@
 // src/app/dashboard/patients/page.js
 "use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import styles from './Patients.module.scss';
 
 const MyPatientsPage = () => {
@@ -64,7 +64,7 @@ const MyPatientsPage = () => {
                                     <td>{patientProfile.phone || 'N/A'}</td>
                                     <td>
                                         <Link href={`/dashboard/patients/${patientProfile.user._id}`} className={styles.viewButton}>
-                                            View Full Profile
+                                            View
                                         </Link>
                                     </td>
                                 </tr>
