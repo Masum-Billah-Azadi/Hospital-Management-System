@@ -4,16 +4,16 @@ import { useSession } from "next-auth/react";
 import Link from 'next/link';
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import styles from './Home.module.scss';
+// Material Tailwind কম্পোনেন্টগুলো ইম্পোর্ট করা হয়েছে
+import { Button, Spinner, Typography } from "@material-tailwind/react";
 
 export default function Home() {
-  const { data: session, status } = useSession();
+    const { data: session, status } = useSession();
     const router = useRouter();
 
+    // এই লজিকে কোনো পরিবর্তন করা হয়নি
     useEffect(() => {
-        // যদি সেশন লোড হয়ে যায় এবং ব্যবহারকারী লগইন করা থাকেন
         if (status === "authenticated" && session) {
-            // ভূমিকা অনুযায়ী সঠিক ড্যাশবোর্ডে রিডাইরেক্ট করা
             if (session.user?.role === 'doctor') {
                 router.replace('/dashboard');
             } else if (session.user?.role === 'admin') {
@@ -24,23 +24,46 @@ export default function Home() {
         }
     }, [session, status, router]);
 
-    // সেশন লোড হওয়ার সময় বা ব্যবহারকারী লগইন করা থাকলে কিছুই দেখানো হবে না (ঐচ্ছিক)
     if (status === "loading" || status === "authenticated") {
-        return <p>Loading...</p>; // অথবা একটি সুন্দর লোডিং স্পিনার দেখাতে পারেন
+        // একটি সুন্দর স্পিনার দেখানো হলো
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <Spinner className="h-12 w-12" />
+            </div>
+        );
     }
-  return (
-    <main className={styles.mainContainer}>
-      <div className={styles.heroSection}>
-        <h1 className={styles.title}>Your Health, Our Priority</h1>
-        <p className={styles.subtitle}>
-          Book appointments with our expert doctors hassle-free.
-        </p>
-        <div className={styles.buttonGroup}>
-          <Link href="/login" className={styles.secondaryButton}>
-                Create Account / Login
-          </Link>
-        </div>
-      </div>
-    </main>
-  );
+
+    // পুরোনো SCSS-এর পরিবর্তে এখানে Tailwind CSS ক্লাস এবং Material Tailwind কম্পোনেন্ট ব্যবহার করা হয়েছে
+    return (
+        <main 
+            className="flex justify-center items-center min-h-screen p-8 text-white text-center 
+                       bg-gradient-to-br from-dark-bg to-primary"
+        >
+            <div> {/* Hero Section এর জন্য একটি wrapper div */}
+                <Typography 
+                    variant="h1" 
+                    color="white" 
+                    className="font-bold mb-4 text-5xl"
+                >
+                    Your Health, Our Priority
+                </Typography>
+                
+                <Typography 
+                    variant="lead" 
+                    color="white" 
+                    className="mb-10 opacity-90"
+                >
+                    Book appointments with our expert doctors hassle-free.
+                </Typography>
+                
+                <div className="flex justify-center gap-6">
+                    <Link href="/login">
+                        <Button variant="outlined" color="white" size="lg">
+                            Create Account / Login
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+        </main>
+    );
 }
