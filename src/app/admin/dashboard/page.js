@@ -32,57 +32,58 @@ const AdminDashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-dark-bg">
+        <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
             <div className="lg:hidden p-2"><AdminNavbar /></div>
-
             <div className="flex gap-4 p-4">
                 <div className="hidden lg:block"><AdminSidebar /></div>
-                
                 <main className="flex-1 min-w-0">
-                    <Typography variant="h3" color="white" className="mb-4 hidden lg:block">User Management</Typography>
+                    <Typography variant="h3" className="mb-4 hidden lg:block text-light-text-primary dark:text-dark-text-primary">User Management</Typography>
                     
-                    <Card className="w-full bg-dark-card text-white">
-                        <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
-                            <div className="hidden md:flex items-center justify-between p-4">
-                                <Typography variant="h6" className="flex-1  text-white">User Info</Typography>
-                                <Typography variant="h6" className="w-48 text-center  text-white">Current Role</Typography>
-                                <Typography variant="h6" className="w-48 text-center  text-white">Change Role</Typography>
-                            </div>
-                        </CardHeader>
+                    <Card className="w-full bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
+                    <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
+                        <div className="hidden md:flex items-center justify-between p-4 border-b border-gray-300 dark:border-blue-gray-100/20">
+                            
+                            {/* The color="inherit" prop has been removed and a className was added */}
+                            <Typography variant="h6" className="flex-1 text-light-text-primary dark:text-dark-text-primary">
+                                User Info
+                            </Typography>
+
+                            {/* The color="inherit" prop has been removed and a className was added */}
+                            <Typography variant="h6" className="w-48 text-center text-light-text-primary dark:text-dark-text-primary">
+                                Current Role
+                            </Typography>
+                            
+                            {/* The color="inherit" prop has been removed and a className was added */}
+                            <Typography variant="h6" className="w-48 text-center text-light-text-primary dark:text-dark-text-primary">
+                                Change Role
+                            </Typography>
+
+                        </div>
+                    </CardHeader>
                         <CardBody className="p-0">
-                            {loading ? (
-                                <div className="flex justify-center items-center h-40"><Spinner color="blue" className="h-12 w-12" /></div>
-                            ) : (
-                                // --- টেবিলের পরিবর্তে নতুন ফ্লেক্সিবল লিস্ট ---
+                            {loading ? ( <div className="..."><Spinner /></div> ) : (
                                 <div>
                                     {users.map((user) => (
-                                        <div 
-                                            key={user._id} 
-                                            className="flex flex-col md:flex-row items-center justify-between p-4 border-b border-blue-gray-100/20 gap-4"
-                                        >
-                                            {/* User Info with Avatar */}
+                                        <div key={user._id} className="flex flex-col md:flex-row items-center justify-between p-4 border-b border-gray-200 dark:border-blue-gray-100/20 gap-4">
                                             <div className="flex items-center gap-4 flex-1 w-full">
-                                                <Avatar src={user.image || `https://ui-avatars.com/api/?name=${user.name.replace(/\s/g, '+')}&background=random`} alt={user.name} />
+                                                <Avatar src={user.image || `...`} alt={user.name} />
                                                 <div>
-                                                    <Typography variant="small" className="font-bold">{user.name}</Typography>
-                                                    <Typography variant="small" className="opacity-80">{user.email}</Typography>
+                                                    <Typography variant="small" color="inherit" className="font-bold">{user.name}</Typography>
+                                                    <Typography variant="small" color="inherit" className="opacity-80">{user.email}</Typography>
                                                 </div>
                                             </div>
-
-                                            {/* Current Role */}
                                             <div className="w-full md:w-48 text-left md:text-center">
                                                 <Typography variant="small" className="md:hidden font-bold opacity-70">Current Role:</Typography>
-                                                <Typography variant="small">{user.role}</Typography>
+                                                <Typography variant="small" color="inherit">{user.role}</Typography>
                                             </div>
-
-                                            {/* Change Role Select */}
                                             <div className="w-full md:w-48">
                                                  <Select
                                                     label="Change Role"
                                                     value={user.role}
                                                     onChange={(newRole) => handleRoleChange(user._id, newRole)}
-                                                    className="text-white"
+                                                    className="text-light-text-primary dark:text-dark-text-primary"
                                                     labelProps={{ className: "before:content-none after:content-none" }}
+                                                    menuProps={{ className: "bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary" }}
                                                 >
                                                     <Option value="patient">Patient</Option>
                                                     <Option value="doctor">Doctor</Option>
@@ -96,7 +97,6 @@ const AdminDashboard = () => {
                         </CardBody>
                     </Card>
                 </main>
-
                 <div className="hidden lg:block"><AdminProfile /></div>
             </div>
         </div>
