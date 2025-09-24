@@ -4,7 +4,7 @@ import { Navbar, Typography, IconButton, Menu, MenuHandler, MenuList, MenuItem, 
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation"; // পরিবর্তন: useRouter ইম্পোর্ট করুন
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
-import { Bars3Icon, PowerIcon, HomeIcon, UserGroupIcon, CalendarDaysIcon } from "@heroicons/react/24/solid";
+import { Bars3Icon, PowerIcon, HomeIcon, UserGroupIcon, CalendarDaysIcon, HeartIcon } from "@heroicons/react/24/solid";
 
 export function PatientNavbar() {
   const { data: session } = useSession();
@@ -36,6 +36,12 @@ export function PatientNavbar() {
             </MenuItem>
             <MenuItem onClick={() => router.push('/patient-dashboard/appointments')} className="flex items-center gap-2">
                 <CalendarDaysIcon className="h-4 w-4" /> My Appointments
+            </MenuItem>
+           <MenuItem 
+              onClick={() => window.open('http://anirban.lovestoblog.com/', '_blank')} 
+              className="flex items-center gap-2"
+            >
+                <HeartIcon className="h-4 w-4" /> Blood Bank
             </MenuItem>
 
             <hr className="my-2 border-gray-300 dark:border-blue-gray-50" />

@@ -2,22 +2,23 @@
 "use client";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import {
-    Bars3Icon,
-    CalendarDaysIcon,
-    HomeIcon,
-    PowerIcon,
-    UserCircleIcon,
-    UserGroupIcon,
+  Bars3Icon,
+  CalendarDaysIcon,
+  HeartIcon,
+  HomeIcon,
+  PowerIcon,
+  UserCircleIcon,
+  UserGroupIcon
 } from "@heroicons/react/24/solid";
 import {
-    Avatar,
-    IconButton,
-    Menu,
-    MenuHandler,
-    MenuItem,
-    MenuList,
-    Navbar,
-    Typography,
+  Avatar,
+  IconButton,
+  Menu,
+  MenuHandler,
+  MenuItem,
+  MenuList,
+  Navbar,
+  Typography,
 } from "@material-tailwind/react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation"; // পরিবর্তন: useRouter ইম্পোর্ট করুন
@@ -58,6 +59,12 @@ export function DoctorNavbar() {
             </MenuItem>
              <MenuItem onClick={() => router.push('/dashboard/profile')} className="flex items-center gap-2">
               <UserCircleIcon className="h-4 w-4" /> Profile
+            </MenuItem>
+             <MenuItem 
+              onClick={() => window.open('http://anirban.lovestoblog.com/', '_blank')} 
+              className="flex items-center gap-2"
+            >
+                <HeartIcon className="h-4 w-4" /> Blood Bank
             </MenuItem>
             
             {/* ... বাকি MenuItem গুলো অপরিবর্তিত ... */}

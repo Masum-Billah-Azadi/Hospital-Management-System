@@ -233,6 +233,13 @@ const PatientDashboardPage = () => {
                     <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
                         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                             <Typography variant="h6" className="text-light-text-primary dark:text-dark-text-primary">Your Reports</Typography>
+
+                            <div className="flex items-center gap-2 text-light-text-primary dark:text-dark-text-primary">
+                            <a href="https://hms-psi-three.vercel.app/" target="_blank" rel="noopener noreferrer">
+                                <Button size="sm" variant="filled" color="blue-gray">
+                                    Generate Report
+                                </Button>
+                            </a>
                             <label 
                                 htmlFor="report-upload" 
                                 className={`cursor-pointer inline-block text-sm font-medium py-2 px-4 rounded-lg transition-colors 
@@ -250,6 +257,7 @@ const PatientDashboardPage = () => {
                                 disabled={isUploadingReport}
                                 accept="image/*, application/pdf"
                             />
+                            </div>
                         </div>
                     </CardHeader>
                     <CardBody>

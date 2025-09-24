@@ -311,8 +311,14 @@ const PatientProfilePage = () => {
                         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                             <Typography variant="h6" className="text-light-text-primary dark:text-dark-text-primary">Medical Reports</Typography>
                             
-                            {/* ===== পরিবর্তন শুরু ===== */}
-                            <label htmlFor="report-upload-doctor" 
+                            <div className="flex items-center gap-2 text-light-text-primary dark:text-dark-text-primary">
+                               <a href="https://hms-psi-three.vercel.app/" target="_blank" rel="noopener noreferrer">
+                                    <Button size="sm" variant="filled" color="blue-gray">
+                                        Generate Report
+                                    </Button>
+                                </a>
+
+                                <label htmlFor="report-upload-doctor" 
                                 className={`cursor-pointer inline-block text-sm font-bold py-2 px-4 rounded-lg border transition-colors 
                                 ${isUploading ? 'bg-gray-400 text-gray-700 cursor-not-allowed' : 'bg-transparent border-blue-gray-500 text-blue-gray-500 hover:bg-blue-gray-50'}`}
                             >
@@ -326,6 +332,7 @@ const PatientProfilePage = () => {
                                 disabled={isUploading}
                                 accept="image/*, application/pdf" 
                             />
+                            </div>
                             
                         </div>
                     </CardHeader>
