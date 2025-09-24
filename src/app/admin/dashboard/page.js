@@ -33,7 +33,9 @@ const AdminDashboard = () => {
 
     return (
         <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
-            <div className="lg:hidden p-2"><AdminNavbar /></div>
+            <div className="lg:hidden sticky top-0 z-50 bg-light-bg dark:bg-dark-bg">
+                <div className="p-2"><AdminNavbar /></div>
+            </div>
             <div className="flex gap-4 p-4">
                 <div className="hidden lg:block"><AdminSidebar /></div>
                 <main className="flex-1 min-w-0">

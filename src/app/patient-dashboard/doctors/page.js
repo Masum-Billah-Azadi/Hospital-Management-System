@@ -1,12 +1,24 @@
 // src/app/patient-dashboard/doctors/page.js
 "use client";
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState, useCallback } from 'react';
-import styles from './Doctors.module.scss';
+import { 
+    Typography, 
+    Input, 
+    Card, 
+    CardBody, 
+    CardFooter, 
+    Avatar, 
+    Button, 
+    Spinner,
+    Menu,
+    MenuHandler,
+    MenuList,
+    MenuItem
+} from '@material-tailwind/react';
+import { ChevronDownIcon } from '@heroicons/react/24/solid';
 
-// **নতুন:** ডেজিগনেশনগুলোর তালিকা
 const specialties = [
     "MEDICINE", "OBSTETRICS & GYNECOLOGY", "PAEDIATRIC MEDICINE", 
     "GENERAL & LAPAROSCOPIC SURGERY", "ORTHOPEDICS", "CARDIOLOGY", 
@@ -16,15 +28,12 @@ const specialties = [
 const FindDoctorsPage = () => {
     const [doctorProfiles, setDoctorProfiles] = useState([]);
     const [loading, setLoading] = useState(true);
-    
-    // **পরিবর্তন:** দুটি আলাদা state ফিল্টারের জন্য
     const [selectedDesignation, setSelectedDesignation] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
 
     const fetchDoctors = useCallback(async () => {
         setLoading(true);
         try {
-            // API URL-এ দুটি প্যারামিটারই যোগ করা হয়েছে
             const res = await fetch(`/api/doctors?designation=${encodeURIComponent(selectedDesignation)}&name=${encodeURIComponent(searchTerm)}`);
             const data = await res.json();
             setDoctorProfiles(data.filter(profile => profile.user));
@@ -33,57 +42,81 @@ const FindDoctorsPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [selectedDesignation, searchTerm]); // dependency পরিবর্তন করা হয়েছে
+    }, [selectedDesignation, searchTerm]);
 
     useEffect(() => {
         fetchDoctors();
     }, [fetchDoctors]);
 
     return (
-        <div className={styles.pageContainer}>
-            <header className={styles.header}>
-                <h1>Find Your Doctor</h1>
-                {/* **নতুন:** ফিল্টার সেকশন */}
-                <div className={styles.filters}>
-                    <select 
-                        className={styles.dropdown}
-                        value={selectedDesignation}
-                        onChange={(e) => setSelectedDesignation(e.target.value)}
-                    >
-                        <option value="">All Specialties</option>
-                        {specialties.map(specialty => (
-                            <option key={specialty} value={specialty}>{specialty}</option>
-                        ))}
-                    </select>
-                    <input
-                        type="text"
-                        className={styles.searchBox}
-                        placeholder="Search by name..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-            </header>
-            <main className={styles.doctorsGrid}>
-                {loading ? (
-                    <p className={styles.message}>Loading doctors...</p>
-                ) : (
-                    doctorProfiles.length > 0 ? doctorProfiles.map(profile => (
-                        <div key={profile._id} className={styles.doctorCard}>
-                            <Image
-                                src={profile.user.image || `https://ui-avatars.com/api/?name=${profile.user.name.replace(/\s/g, '+')}&background=random`}
-                                alt={`Dr. ${profile.user.name}`}
-                                width={100}
-                                height={100}
-                                className={styles.doctorAvatar}
-                            />
-                            <h3>Dr. {profile.user.name}</h3>
-                            <p className={styles.specialty}>{profile.designation || 'Doctor'}</p>
-                            <Link href={`/book-appointment/${profile.user._id}`} className={styles.bookButton}>
-                                Book Appointment
-                            </Link>
-                        </div>
-                    )) : <p className={styles.message}>No doctors found matching your criteria.</p>
+        <div className="flex flex-col gap-6">
+            <Card className="w-full bg-light-card dark:bg-dark-card">
+                <CardBody>
+                    <Typography variant="h5" className="mb-4 text-light-text-primary dark:text-dark-text-primary">
+                        Find Your Doctor
+                    </Typography>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Menu>
+                            <MenuHandler>
+                                <Button
+                                    variant="outlined"
+                                    // পরিবর্তন: color="blue-gray" সরিয়ে class দিয়ে রঙ নিয়ন্ত্রণ করা হয়েছে
+                                    className="w-full flex justify-between items-center border-gray-400 text-light-text-primary dark:text-dark-text-primary dark:border-dark-text-secondary"
+                                >
+                                    {selectedDesignation || "All Specialties"}
+                                    <ChevronDownIcon
+                                        strokeWidth={2.5}
+                                        className={`h-4 w-4 transition-transform`}
+                                    />
+                                </Button>
+                            </MenuHandler>
+                            <MenuList className="w-full md:w-72 bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary border-gray-300 dark:border-gray-700">
+                                <MenuItem onClick={() => setSelectedDesignation('')}>All Specialties</MenuItem>
+                                {specialties.map(specialty => (
+                                    <MenuItem key={specialty} onClick={() => setSelectedDesignation(specialty)}>
+                                        {specialty}
+                                    </MenuItem>
+                                ))}
+                            </MenuList>
+                        </Menu>
+                        
+                        {/* ===== Input পরিবর্তন ===== */}
+                        <Input 
+                            crossOrigin={""} 
+                            label="Search by name..." 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)} 
+                            color="blue-gray"
+                            className="dark:text-white"
+                            // পরিবর্তন: placeholder/label এর রঙ ঠিক করার জন্য labelProps যোগ করা হয়েছে
+                            labelProps={{
+                                className: "text-light-text-secondary dark:text-dark-text-secondary"
+                            }}
+                        />
+                    </div>
+                </CardBody>
+            </Card>
+
+            <main>
+                {loading ? ( <div className="flex justify-center py-10"><Spinner className="h-12 w-12" /></div> ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {doctorProfiles.length > 0 ? doctorProfiles.map(profile => (
+                            <Card key={profile._id} className="flex flex-col text-center bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
+                                <CardBody className="flex flex-col items-center flex-1 p-4">
+                                    <Avatar src={profile.user.image || `https://ui-avatars.com/api/?name=${profile.user.name.replace(/\s/g, '+')}&background=random`} alt={`Dr. ${profile.user.name}`} size="xxl" className="mb-4"/>
+                                    <Typography variant="h6" color="inherit">Dr. {profile.user.name}</Typography>
+                                    <Typography color="blue" textGradient className="font-medium mb-4 text-sm">
+                                        {profile.designation || 'Doctor'}
+                                    </Typography>
+                                </CardBody>
+                                <CardFooter className="pt-0 p-4">
+                                    <Link href={`/patient-dashboard/book-appointment/${profile.user._id}`}>
+                                        <Button color="blue" fullWidth>Book Appointment</Button>
+                                    </Link>
+                                </CardFooter>
+                            </Card>
+                        )) : ( <div className="col-span-full text-center py-10"><Typography className="text-light-text-secondary dark:text-dark-text-secondary">No doctors found.</Typography></div> )}
+                    </div>
                 )}
             </main>
         </div>

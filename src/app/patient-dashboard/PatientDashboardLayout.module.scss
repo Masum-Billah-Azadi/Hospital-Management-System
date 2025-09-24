@@ -1,9 +1,0 @@
-.dashboardContainer {
-  display: flex;
-}
-
-.mainContent {
-  flex-grow: 1; /* সাইডবারের পর বাকি সব জায়গা নেবে */
-  height: 100vh; /* পুরো স্ক্রিনের উচ্চতা */
-  overflow-y: auto; /* শুধুমাত্র এই অংশে স্ক্রল হবে */
-}

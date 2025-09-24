@@ -19,7 +19,7 @@ export async function GET(request) {
             .populate({
                 path: 'doctor',
                 model: User,
-                select: 'name' // ডাক্তারের শুধু নাম দরকার
+                select: 'name image' // ডাক্তারের শুধু নাম দরকার
             })
             .sort({ createdAt: -1 });
 

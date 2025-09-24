@@ -7,8 +7,8 @@ export default function DashboardLayout({ children }) {
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
       {/* Mobile Navbar */}
-      <div className="lg:hidden p-2">
-        <DoctorNavbar />
+      <div className="lg:hidden sticky top-0 z-50 bg-light-bg dark:bg-dark-bg">
+          <div className="p-2"><DoctorNavbar /></div>
       </div>
       
       {/* Main Container */}
