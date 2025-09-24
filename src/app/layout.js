@@ -1,5 +1,5 @@
 // src/app/layout.js
-
+// import Footer from "@/components/common/Footer";
 import "@/styles/globals.css";
 import { Poppins } from "next/font/google";
 import { Providers } from "./providers"; // <-- নতুন Providers কম্পোনেন্ট ইম্পোর্ট করুন
@@ -15,9 +15,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        {/* AuthProvider এবং ThemeProvider এর পরিবর্তে শুধু Providers ব্যবহার করুন */}
-        <Providers>{children}</Providers>
+      <body className="flex flex-col min-h-screen">
+        <main className="flex-grow">
+          <Providers>{children}</Providers>
+        </main>
+        {/* <Footer /> */}
       </body>
     </html>
   );

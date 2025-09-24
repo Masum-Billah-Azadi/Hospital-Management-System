@@ -1,13 +1,21 @@
 // src/app/patient-dashboard/page.js
 "use client";
 
+import { ArrowDownTrayIcon, DocumentTextIcon, EyeIcon, PencilIcon, PhotoIcon } from '@heroicons/react/24/solid';
+import {
+    Avatar,
+    Button,
+    Card,
+    CardBody,
+    CardHeader,
+    IconButton,
+    Input, List, ListItem,
+    ListItemSuffix,
+    Spinner,
+    Typography
+} from '@material-tailwind/react';
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useState } from 'react';
-import { 
-    Card, CardHeader, CardBody, Typography, Button, Avatar, Input, List, ListItem, 
-    ListItemSuffix, IconButton, Spinner
-} from '@material-tailwind/react';
-import { PencilIcon, EyeIcon, DocumentTextIcon, PhotoIcon, ArrowDownTrayIcon } from '@heroicons/react/24/solid';
 
 const PatientDashboardPage = () => {
     const { update } = useSession();
@@ -185,6 +193,42 @@ const PatientDashboardPage = () => {
                     </CardBody>
                 </Card>
 
+                <Card className="bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
+                    <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                             <Typography variant="h6" className="text-light-text-primary dark:text-dark-text-primary">Your Prescriptions</Typography>
+                        </div>
+                    </CardHeader>
+                    <CardBody className="flex flex-col gap-4 p-4">
+                        {prescriptions && prescriptions.length > 0 ? prescriptions.slice().reverse().map(p => (
+                            <Card key={p._id} className="p-4 bg-light-bg dark:bg-dark-bg border border-gray-200 dark:border-gray-700">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Avatar src={p.doctorInfo.image || '/default-avatar.png'} alt={p.doctorInfo.name} size="sm" />
+                                    <div>
+                                        <Typography variant="small" className="font-bold text-light-text-primary dark:text-dark-text-primary">Dr. {p.doctorInfo.name}</Typography>
+                                        <Typography variant="small" className="opacity-80 text-light-text-secondary dark:text-dark-text-secondary">{new Date(p.createdAt).toLocaleDateString()}</Typography>
+                                    </div>
+                                    <div className="ml-auto">
+                                        <IconButton variant="text" onClick={() => handleDownloadPdf(p._id)}><ArrowDownTrayIcon className="h-5 w-5 text-light-text-secondary dark:text-dark-text-secondary"/></IconButton>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col space-y-1 pl-4">
+                                    {p.medications.map((med, index) => (
+                                        med.medicationName && (
+                                            <div key={index} className="flex flex-row items-start">
+                                                <Typography variant="small" as="span" className="w-6 font-bold text-light-text-secondary dark:text-dark-text-secondary">{index + 1}.</Typography>
+                                                <Typography variant="small" as="div" className="flex-1 text-light-text-primary dark:text-dark-text-primary">
+                                                    <strong>{med.medicationName}</strong> - {med.dosage || 'N/A'}
+                                                </Typography>
+                                            </div>
+                                        )
+                                    ))}
+                                </div>
+                            </Card>
+                        )) : <Typography variant="small" className="text-center">No prescriptions yet.</Typography>}
+                    </CardBody>
+                </Card>
+
                 <Card className="w-full bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
                     <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
                         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
@@ -230,41 +274,7 @@ const PatientDashboardPage = () => {
                     </CardBody>
                 </Card>
                 
-                <Card className="bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
-                    <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                             <Typography variant="h6" className="text-light-text-primary dark:text-dark-text-primary">Your Prescriptions</Typography>
-                        </div>
-                    </CardHeader>
-                    <CardBody className="flex flex-col gap-4 p-4">
-                        {prescriptions && prescriptions.length > 0 ? prescriptions.slice().reverse().map(p => (
-                            <Card key={p._id} className="p-4 bg-light-bg dark:bg-dark-bg border border-gray-200 dark:border-gray-700">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <Avatar src={p.doctorInfo.image || '/default-avatar.png'} alt={p.doctorInfo.name} size="sm" />
-                                    <div>
-                                        <Typography variant="small" className="font-bold text-light-text-primary dark:text-dark-text-primary">Dr. {p.doctorInfo.name}</Typography>
-                                        <Typography variant="small" className="opacity-80 text-light-text-secondary dark:text-dark-text-secondary">{new Date(p.createdAt).toLocaleDateString()}</Typography>
-                                    </div>
-                                    <div className="ml-auto">
-                                        <IconButton variant="text" onClick={() => handleDownloadPdf(p._id)}><ArrowDownTrayIcon className="h-5 w-5 text-light-text-secondary dark:text-dark-text-secondary"/></IconButton>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col space-y-1 pl-4">
-                                    {p.medications.map((med, index) => (
-                                        med.medicationName && (
-                                            <div key={index} className="flex flex-row items-start">
-                                                <Typography variant="small" as="span" className="w-6 font-bold text-light-text-secondary dark:text-dark-text-secondary">{index + 1}.</Typography>
-                                                <Typography variant="small" as="div" className="flex-1 text-light-text-primary dark:text-dark-text-primary">
-                                                    <strong>{med.medicationName}</strong> - {med.dosage || 'N/A'}
-                                                </Typography>
-                                            </div>
-                                        )
-                                    ))}
-                                </div>
-                            </Card>
-                        )) : <Typography variant="small" className="text-center">No prescriptions yet.</Typography>}
-                    </CardBody>
-                </Card>
+                
             </div>
         </div>
     );
