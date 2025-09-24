@@ -9,22 +9,24 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@sparticuz/chromium": "^138.0.2",
+    "@heroicons/react": "^2.2.0",
+    "@material-tailwind/react": "^2.1.10",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.7.0",
     "mongoose": "^8.18.0",
     "next": "14.2.32",
     "next-auth": "^4.24.11",
-    "puppeteer-core": "^24.21.0",
     "qrcode": "^1.5.4",
     "react": "^18",
     "react-dom": "^18",
     "recharts": "^3.1.2",
-    "sass": "^1.90.0",
     "streamifier": "^0.1.1"
   },
   "devDependencies": {
+    "autoprefixer": "^10.4.21",
     "eslint": "^8",
-    "eslint-config-next": "14.2.32"
+    "eslint-config-next": "14.2.32",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.0"
   }
 }

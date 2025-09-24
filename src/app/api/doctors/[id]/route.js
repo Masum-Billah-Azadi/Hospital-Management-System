@@ -2,21 +2,29 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User.model";
+import DoctorProfile from "@/models/DoctorProfile.model"; // DoctorProfile মডেল ইম্পোর্ট করুন
 import mongoose from 'mongoose';
 
 export async function GET(request, { params }) {
     await dbConnect();
-    const { id } = params;
+    const { id } = params; // এটি ডাক্তারের User ID
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return NextResponse.json({ message: "Invalid Doctor ID format" }, { status: 400 });
     }
 
     try {
-        const doctor = await User.findById(id);
+        // DoctorProfile মডেল থেকে user ID দিয়ে ডাক্তারকে খোঁজা হচ্ছে
+        const doctorProfile = await DoctorProfile.findOne({ user: id })
+            .populate({
+                path: 'user', // DoctorProfile-এর 'user' ফিল্ডটিকে populate করা হচ্ছে
+                model: User,
+                select: 'name email image' // User মডেল থেকে এই তথ্যগুলো আনা হচ্ছে
+            });
 
-        if (doctor && doctor.role === 'doctor') {
-            return NextResponse.json({ name: doctor.name, email: doctor.email }, { status: 200 });
+        if (doctorProfile) {
+            // এখন doctorProfile অবজেক্টের ভেতরে designation এবং user-এর সব তথ্য আছে
+            return NextResponse.json(doctorProfile, { status: 200 });
         } else {
             return NextResponse.json({ message: "Doctor not found" }, { status: 404 });
         }

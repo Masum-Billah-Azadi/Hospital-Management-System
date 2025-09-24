@@ -1,28 +1,24 @@
 // src/components/dashboard/RightSidebar.js
 "use client";
-
+import { Avatar, Card, List, ListItem, ListItemPrefix, Typography } from "@material-tailwind/react";
 import { useSession } from 'next-auth/react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import PatientChart from './PatientChart';
-import styles from './RightSidebar.module.scss';
 
 const RightSidebar = () => {
     const { data: session } = useSession();
     const [doctorProfile, setDoctorProfile] = useState(null);
-    const [recentPatients, setRecentPatients] = useState([]); // **নতুন:** 최근 환자 목록을 위한 상태
+    const [recentPatients, setRecentPatients] = useState([]);
 
     useEffect(() => {
         if (session) {
-            // **পরিবর্তন:** ড্যাশবোর্ডের নতুন API থেকে ডেটা আনা হচ্ছে
             const fetchDashboardData = async () => {
                 try {
                     const res = await fetch('/api/dashboard/doctor');
                     if (res.ok) {
                         const data = await res.json();
-                        setDoctorProfile(data.doctorProfile); // ডাক্তারের প্রোফাইল সেট করা
-                        setRecentPatients(data.recentPatients || []); // **নতুন:** সাম্প্রতিক রোগীদের ডেটা সেট করা
+                        setDoctorProfile(data.doctorProfile);
+                        setRecentPatients(data.recentPatients || []);
                     }
                 } catch (error) {
                     console.error("Failed to fetch dashboard data for sidebar", error);
@@ -33,51 +29,42 @@ const RightSidebar = () => {
     }, [session]);
 
     return (
-        <aside className={styles.rightSidebar}>
-            {/* My Profile Section */}
-            <div className={styles.profileCard}>
-                <div className={styles.profileDetails}>
-                    <Image
-                        src={session?.user?.image || `https://ui-avatars.com/api/?name=${session?.user?.name}`}
-                        alt="Profile"
-                        width={80}
-                        height={80}
-                        className={styles.profileImage}
-                    />
-                    <h4>Dr. {session?.user?.name}</h4>
-                    {/* **পরিবর্তন:** Designation এখন DoctorProfile থেকে আসবে */}
-                    <p>{doctorProfile?.designation || 'Specialty'}</p>
+        <aside className="sticky top-4 h-[calc(100vh-2rem)] flex flex-col gap-4">
+            {/* My Profile Card */}
+            <Card className="p-4 shadow-xl bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
+                <Typography variant="h6" className="mb-2">My Profile</Typography>
+                <div className="flex flex-col items-center text-center gap-2">
+                    <Avatar src={session?.user?.image || `...`} alt="Profile" size="xl" />
+                    <Typography variant="h6">Dr. {session?.user?.name}</Typography>
+                    <Typography variant="small" className="opacity-80">{doctorProfile?.designation || 'Specialty'}</Typography>
                 </div>
-            </div>
+            </Card>
 
-            {/* Last Patient Section */}
-            <div className={styles.lastPatientCard}>
-                <div className={styles.cardHeader}>
-                    <h3>Last Patients</h3>
-                    <Link href="/dashboard/patients">View All</Link>
+            {/* Last Patient Card */}
+            <Card className="flex-1 p-4 shadow-xl bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
+                <div className="flex justify-between items-center mb-2">
+                    <Typography variant="h6">Last Patients</Typography>
+                    <Link href="/dashboard/patients">
+                        <Typography variant="small" className="text-primary font-bold">View All</Typography>
+                    </Link>
                 </div>
-                <ul className={styles.patientList}>
-                    {/* **পরিবর্তন:** recentPatients থেকে ডাইনামিকভাবে তালিকা তৈরি হচ্ছে */}
-                    {recentPatients.length > 0 ? recentPatients.map(patient => (
-                        <li key={patient._id} className={styles.patientItem}>
-                            <Image
-                                src={patient.user?.image || `https://ui-avatars.com/api/?name=${patient.user?.name}`}
-                                alt={patient.user?.name}
-                                width={40}
-                                height={40}
-                                className={styles.patientImage}
-                            />
-                            <div className={styles.patientInfo}>
-                                <h4>{patient.user?.name}</h4>
-                                <p>Last visit: {new Date(patient.updatedAt).toLocaleDateString()}</p>
+                <List className="p-0">
+                    {recentPatients.length > 0 ? recentPatients.slice(0, 3).map(patient => ( // Show only 3 recent patients
+                        <ListItem key={patient._id} className="text-light-text-primary dark:text-dark-text-primary">
+                            <ListItemPrefix>
+                                <Avatar src={patient.user?.image || `...`} alt={patient.user?.name} size="sm" />
+                            </ListItemPrefix>
+                            <div>
+                                <Typography variant="small" className="font-bold">{patient.user?.name}</Typography>
+                                <Typography variant="small" className="opacity-80">Last visit: {new Date(patient.updatedAt).toLocaleDateString()}</Typography>
                             </div>
-                        </li>
+                        </ListItem>
                     )) : (
-                        <p className={styles.noPatients}>No recent patients.</p>
+                        <Typography variant="small" className="text-center p-4 opacity-80">No recent patients.</Typography>
                     )}
-                </ul>
-            </div>
-            <PatientChart />
+                </List>
+            </Card>
+             {/* PatientChart could go here if needed */}
         </aside>
     );
 };

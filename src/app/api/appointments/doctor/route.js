@@ -1,14 +1,13 @@
 // src/app/api/appointments/doctor/route.js
 
-import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Appointment from "@/models/Appointment.model";
-import User from "@/models/User.model"; // Make sure User model is imported
+import User from "@/models/User.model"; // User model is needed for populating
+import { getServerSession } from "next-auth/next";
+import { NextResponse } from "next/server";
 
 export async function GET(request) {
-    // 1. Get the session and protect the route
     const session = await getServerSession(authOptions);
 
     if (!session || session.user.role !== 'doctor') {
@@ -21,14 +20,14 @@ export async function GET(request) {
     try {
         await dbConnect();
 
-        // 2. Fetch appointments for the logged-in doctor
+        // **পরিবর্তন:** এখানে populate সঠিকভাবে User মডেল থেকে image সহ সব তথ্য আনবে
         const appointments = await Appointment.find({ doctor: session.user.id })
             .populate({
-                path: 'patient',
+                path: 'patient', // Appointment মডেলের 'patient' ফিল্ড, যা User ID ধারণ করে
                 model: User,
-                select: 'name email' // Select which fields of the patient to return
+                select: 'name email image' // User মডেল থেকে নাম, ইমেল এবং ছবি আনা হচ্ছে
             })
-            .sort({ createdAt: -1 }); // Show newest appointments first
+            .sort({ createdAt: -1 });
 
         return NextResponse.json(appointments, { status: 200 });
 

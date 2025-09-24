@@ -1,3 +1,4 @@
+// src/app/api/dashboard/doctor/route.js
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/dbConnect";
 import Appointment from "@/models/Appointment.model";

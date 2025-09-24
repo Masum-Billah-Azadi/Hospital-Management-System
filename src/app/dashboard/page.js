@@ -1,33 +1,29 @@
 // src/app/dashboard/page.js
 "use client";
+import { CalendarDaysIcon, PlusIcon, UsersIcon } from "@heroicons/react/24/solid";
+import { Avatar, Button, Card, Spinner, Typography } from "@material-tailwind/react";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import styles from './Dashboard.module.scss';
 
-// Stat Card কম্পোনেন্ট (একই ফাইলের ভেতরে রাখা হলো)
+// Stat Card Component
 const StatCard = ({ title, value, icon, link }) => {
     const cardContent = (
-        <div className={styles.statCard}>
-            <div className={styles.iconWrapper}>{icon}</div>
-            <div className={styles.statInfo}>
-                <p>{title}</p>
-                {/* শুধুমাত্র value থাকলেই সেটি দেখানো হবে */}
-                {value !== undefined && <span>{value}</span>}
-            </div>
+      // পরিবর্তন: এখানে h-full ক্লাসটি যোগ করা হয়েছে
+      <Card className="p-4 shadow-md bg-light-card dark:bg-dark-card hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors h-full">
+        <div className="flex items-center gap-4">
+          <div className="bg-primary/20 p-3 rounded-full">{icon}</div>
+          <div>
+            <Typography className="text-light-text-secondary dark:text-dark-text-secondary">{title}</Typography>
+            {/* পরিবর্তন: value না থাকলেও একটি অদৃশ্য স্পেস রাখা হয়েছে */}
+            <Typography variant="h4" className="text-light-text-primary dark:text-dark-text-primary">
+              {value !== undefined ? value : <>&nbsp;</>}
+            </Typography>
+          </div>
         </div>
+      </Card>
     );
-
-    // যদি লিঙ্ক থাকে, তাহলে কার্ডটিকে একটি clickable লিঙ্কে পরিণত করা হবে
-    if (link) {
-        return (
-            <a href={link} target="_blank" rel="noopener noreferrer" className={styles.cardLink}>
-                {cardContent}
-            </a>
-        );
-    }
-
+    if (link) return <a href={link} target="_blank" rel="noopener noreferrer">{cardContent}</a>;
     return cardContent;
 };
 
@@ -40,10 +36,7 @@ const DoctorDashboardPage = () => {
         const fetchData = async () => {
             try {
                 const res = await fetch('/api/dashboard/doctor');
-                if (res.ok) {
-                    const data = await res.json();
-                    setDashboardData(data);
-                }
+                if (res.ok) setDashboardData(await res.json());
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);
             } finally {
@@ -53,72 +46,67 @@ const DoctorDashboardPage = () => {
         fetchData();
     }, []);
 
-    if (loading) return <p className={styles.loading}>Loading Dashboard...</p>;
+    if (loading) return <div className="flex justify-center items-center h-screen"><Spinner className="h-12 w-12" /></div>;
 
     return (
-        <div className={styles.dashboardContainer}>
-            <header className={styles.header}>
+        <div className="flex flex-col gap-6">
+            {/* Header and Welcome Banner */}
+            <header className="flex justify-between items-center">
                 <div>
-                    <h2>Dashboard</h2>
-                    <p className={styles.currentDate}>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <Typography variant="h4" className="text-light-text-primary dark:text-dark-text-primary">Dashboard</Typography>
+                    <Typography className="text-light-text-secondary dark:text-dark-text-secondary">{new Date().toLocaleDateString('en-US', { dateStyle: 'full' })}</Typography>
                 </div>
+                <Button color="blue" className="hidden md:flex items-center gap-2"><PlusIcon className="h-5 w-5"/> Add Patient</Button>
             </header>
-            <div className={styles.welcomeBanner}>
-                <div className={styles.bannerText}>
-                    <h2>Welcome, Dr. {session?.user?.name || 'User'}</h2>
-                    <p>Have a nice day at work</p>
-                </div>
-            </div>
 
-            <section className={styles.statsGrid}>
+            <Card className="p-6 bg-primary text-white">
+                <Typography variant="h5">Welcome, Dr. {session?.user?.name || 'User'}!</Typography>
+                <Typography>Have a nice day at work</Typography>
+            </Card>
+
+            {/* Stats Grid */}
+            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <StatCard 
                     title="Today's Appointments" 
                     value={dashboardData?.stats?.todaysAppointmentsCount || 0} 
-                    icon={"📅"} 
+                    icon={<CalendarDaysIcon className="h-6 w-6 text-primary"/>} 
                 />
                 <StatCard 
                     title="Total Patients" 
                     value={dashboardData?.stats?.totalPatientsCount || 0} 
-                    icon={"👥"} 
+                    icon={<UsersIcon className="h-6 w-6 text-primary"/>} 
                 />
                 <StatCard 
                     title="Blood Bank & Donation" 
-                    icon={"🩸"}
+                    icon={<span className="text-2xl">🩸</span>} // Emoji can work too
                     link="http://anirban.lovestoblog.com/"
                 />
             </section>
 
-            <section className={styles.appointmentsSection}>
-                <h2>Today&apos;s Appointments</h2>
-                <div className={styles.appointmentList}>
+            {/* Appointments Section */}
+            <Card className="bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
+                <Typography variant="h6" className="p-4 border-b border-gray-200 dark:border-gray-700">Today&apos;s Appointments</Typography>
+                <div className="p-4">
                     {dashboardData?.todaysAppointments?.length > 0 ? (
                         dashboardData.todaysAppointments.map(app => (
-                            <div key={app._id} className={styles.appointmentItem}>
-                                <div className={styles.patientInfo}>
-                                    <Image 
-                                        src={app.patient?.image || `https://ui-avatars.com/api/?name=${app.patient?.name}`}
-                                        alt={app.patient?.name}
-                                        width={40}
-                                        height={40}
-                                        className={styles.patientAvatar}
-                                    />
+                            <div key={app._id} className="flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                    <Avatar src={app.patient?.image || `...`} alt={app.patient?.name} />
                                     <span>{app.patient?.name}</span>
                                 </div>
-                                <div className={styles.appointmentTime}>
-                                    {new Date(app.appointmentDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                                <Link href={`/dashboard/patients/${app.patient?._id}`} className={styles.viewProfileBtn}>
-                                    View Profile
+                                <span>{app.scheduledTime || new Date(app.appointmentDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                <Link href={`/dashboard/patients/${app.patient?._id}`}>
+                                    <Button size="sm" variant="text" color="blue">View Profile</Button>
                                 </Link>
                             </div>
                         ))
                     ) : (
-                        <div className={styles.noAppointments}>
-                            <p>You have no appointments for today. ✨</p>
+                        <div className="text-center py-10">
+                            <Typography className="opacity-80">You have no appointments for today. ✨</Typography>
                         </div>
                     )}
                 </div>
-            </section>
+            </Card>
         </div>
     );
 };
