@@ -1,14 +1,18 @@
 "use client";
 
-import { ArrowDownTrayIcon, DocumentTextIcon, EyeIcon, PencilIcon, PhotoIcon, TrashIcon } from '@heroicons/react/24/solid';
+import { ArrowDownTrayIcon, DocumentTextIcon, EyeIcon, PencilIcon, PhotoIcon,XMarkIcon } from '@heroicons/react/24/solid';
 import {
     Avatar, Button,
     Card, CardBody, CardHeader,
     IconButton,
     Input,
-    List, ListItem, ListItemSuffix, Spinner,
+    List, ListItem, ListItemSuffix,
+    Option,
+    Select,
+    Spinner,
     Textarea,
-    Typography
+    Typography, 
+    Dialog, DialogHeader, DialogBody, DialogFooter
 } from '@material-tailwind/react';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react'; // useCallback is imported
@@ -22,10 +26,22 @@ const PatientProfilePage = () => {
     const [isEditingVitals, setIsEditingVitals] = useState(false);
     const [vitalsData, setVitalsData] = useState({ age: '', height: '', weight: '', bloodPressure: '' });
     const [showMedicationForm, setShowMedicationForm] = useState(false);
-    const [medications, setMedications] = useState([{ medicationName: '', dosage: '', notes: '' }]);
+    // পরিবর্তন: Medication state-এ নতুন ফিল্ড যোগ করা হয়েছে
+    const [medications, setMedications] = useState([
+        { medicationName: '', dosage: '', frequency: '', instruction: '' }
+    ]);
     const [generalNotes, setGeneralNotes] = useState('');
     const [suggestedReports, setSuggestedReports] = useState('');
     const [isUploading, setIsUploading] = useState(false);
+
+    // ===== New states for the suggestion feature =====
+    const [searchTerm, setSearchTerm] = useState('');
+    const [suggestions, setSuggestions] = useState([]);
+    const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
+     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+    const [selectedMedicine, setSelectedMedicine] = useState(null);
+
+
 
     // FIX: Wrapped in useCallback to resolve ESLint warning
     const fetchPatientProfile = useCallback(async () => {
@@ -54,6 +70,44 @@ const PatientProfilePage = () => {
         }
     }, [patientId, fetchPatientProfile]); // fetchPatientProfile is now a dependency
 
+    // ===== নতুন useEffect যোগ করা হয়েছে =====
+    useEffect(() => {
+        if (searchTerm.length < 3) {
+            setSuggestions([]);
+            return;
+        }
+        setIsFetchingSuggestions(true);
+        const handler = setTimeout(() => {
+            fetch(`/api/medicines/suggest?q=${searchTerm}`) // 'disease' এর পরিবর্তে 'q'
+                .then(res => res.json())
+                .then(data => {
+                    setSuggestions(data);
+                    setIsFetchingSuggestions(false);
+                });
+        }, 500);
+
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
+
+    // ===== নতুন handler ফাংশন যোগ করা হয়েছে =====
+    const handleSuggestionClick = (medicine) => {
+        const newMedications = medications.filter(med => med.medicationName);
+        setMedications([
+            ...newMedications,
+            { medicationName: medicine.brandName, dosage: medicine.strength, frequency: '', instruction: '' }
+        ]);
+        setSuggestions([]);
+        setSearchTerm('');
+    };
+    const handleViewDetails = (medicine, e) => {
+        e.stopPropagation(); // এটি ListItem-এর onClick ট্রিগার হওয়া থেকে বিরত রাখে
+        setSelectedMedicine(medicine);
+        setIsDetailsModalOpen(true);
+    };
+
+    const closeDetailsModal = () => setIsDetailsModalOpen(false);
+    
+
     // Handler for saving vitals
     const handleVitalsSave = async () => {
         try {
@@ -73,16 +127,20 @@ const PatientProfilePage = () => {
         }
     };
 
-    // Handlers for dynamic prescription form
-    const handleMedicationChange = (index, e) => {
-        const { name, value } = e.target;
+    // পরিবর্তন: handleMedicationChange ফাংশনটি Select এবং Input উভয়ের জন্য আপডেট করা হয়েছে
+    const handleMedicationChange = (index, eventOrValue, fieldName) => {
         const updatedMedications = [...medications];
-        updatedMedications[index][name] = value;
+        if (fieldName) {
+            updatedMedications[index][fieldName] = eventOrValue;
+        } else {
+            const { name, value } = eventOrValue.target;
+            updatedMedications[index][name] = value;
+        }
         setMedications(updatedMedications);
     };
 
     const addMedicationField = () => {
-        setMedications([...medications, { medicationName: '', dosage: '', notes: '' }]);
+        setMedications([...medications, { medicationName: '', dosage: '', frequency: '', instruction: '' }]);
     };
 
     const removeMedicationField = (index) => {
@@ -189,7 +247,8 @@ const PatientProfilePage = () => {
                 </CardBody>
             </Card>
 
-            {/* --- All cards are now in a single vertical column --- */}
+
+            <div className="flex flex-col gap-6">
             {/* Vitals Card */}
             <Card className="w-full bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
                 <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
@@ -224,26 +283,79 @@ const PatientProfilePage = () => {
             </Card>
 
             {/* Add Prescription Card */}
-            <Card className="w-full bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
-                <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
-                    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                        <Typography variant="h6" className="text-light-text-primary dark:text-dark-text-primary">Add New Prescription</Typography>
-                        {!showMedicationForm && <Button size="sm" onClick={() => setShowMedicationForm(true)}>Create</Button>}
-                    </div>
-                </CardHeader>
-                {showMedicationForm && (
+<Card className="w-full bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
+    <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <Typography variant="h6" className="text-light-text-primary dark:text-dark-text-primary">Add New Prescription</Typography>
+            {!showMedicationForm && <Button size="sm" onClick={() => setShowMedicationForm(true)}>Create</Button>}
+        </div>
+    </CardHeader>
+    {showMedicationForm && (
                     <CardBody>
                         <form onSubmit={handleMedicationSubmit} className="flex flex-col gap-4">
+                            {/* নতুন Diagnosis ইনপুট ফিল্ড */}
+                            <div className="relative">
+                                <Input 
+                                    crossOrigin={""} 
+                                    label="Search by Disease, Brand or Generic Name..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    color="blue-gray" className="dark:text-white"
+                                />
+                                {(isFetchingSuggestions || suggestions.length > 0) && (
+                                    <Card className="absolute z-10 w-full mt-1 ...">
+                                        <List>
+                                            {isFetchingSuggestions ? ( <ListItem disabled>Loading...</ListItem> ) : (
+                                                suggestions.map(med => (
+                                                    <ListItem key={med._id} onClick={() => handleSuggestionClick(med)} className="...">
+                                                        <div className="flex justify-between items-center w-full">
+                                                            <div className="flex flex-col">
+                                                                <Typography variant="small" className="font-bold">{med.brandName} - {med.strength}</Typography>
+                                                                <Typography variant="small" className="opacity-80">{med.genericName}</Typography>
+                                                            </div>
+                                                            <IconButton variant="text" size="sm" onClick={(e) => handleViewDetails(med, e)}>
+                                                                <EyeIcon className="h-5 w-5" />
+                                                            </IconButton>
+                                                        </div>
+                                                    </ListItem>
+                                                ))
+                                            )}
+                                        </List>
+                                    </Card>
+                                )}
+                            </div>
+                            <hr className="my-2 border-gray-300 dark:border-gray-700" />
+                            {/* --- Medication Input Fields --- */}
                             {medications.map((med, index) => (
-                                <div key={index} className="flex flex-col sm:flex-row items-center gap-2">
-                                    <Input crossOrigin={""} name="medicationName" value={med.medicationName} onChange={(e) => handleMedicationChange(index, e)} label="Medication Name" required color="blue-gray" className="dark:text-white"/>
-                                    <Input crossOrigin={""} name="dosage" value={med.dosage} onChange={(e) => handleMedicationChange(index, e)} label="Dosage" color="blue-gray" className="dark:text-white"/>
-                                    {medications.length > 1 && <IconButton color="red" variant="text" onClick={() => removeMedicationField(index)}><TrashIcon className="h-5 w-5" /></IconButton>}
+                                <div key={index} className="p-4 border rounded-lg border-gray-300 dark:border-gray-700">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <Input crossOrigin={""} name="medicationName" value={med.medicationName} onChange={(e) => handleMedicationChange(index, e)} label="Medication Name" required color="blue-gray" className="dark:text-white" labelProps={{className: "dark:!text-dark-text-secondary"}}/>
+                                        <Input crossOrigin={""} name="dosage" value={med.dosage} onChange={(e) => handleMedicationChange(index, e)} label="Dosage (e.g., 500mg)" color="blue-gray" className="dark:text-white" labelProps={{className: "dark:!text-dark-text-secondary"}}/>
+                                        
+                                        <Select label="Frequency" value={med.frequency} onChange={(value) => handleMedicationChange(index, value, 'frequency')} animate={{ mount: { y: 0 }, unmount: { y: 25 } }} color="blue-gray" className="dark:text-white" labelProps={{className: "dark:!text-dark-text-secondary"}} menuProps={{ className: "bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary" }}>
+                                            <Option value="1+1+1">১+১+১</Option>
+                                            <Option value="1+0+1">১+০+১</Option>
+                                            <Option value="1+0+0">১+০+০</Option>
+                                            <Option value="0+0+1">০+০+১</Option>
+                                            <Option value="দিনে ১ বার">দিনে ১ বার</Option>
+                                            <Option value="দিনে ২ বার">দিনে ২ বার</Option>
+                                        </Select>
+
+                                        <Select label="Instruction" value={med.instruction} onChange={(value) => handleMedicationChange(index, value, 'instruction')} animate={{ mount: { y: 0 }, unmount: { y: 25 } }} color="blue-gray" className="dark:text-white" labelProps={{className: "dark:!text-dark-text-secondary"}} menuProps={{ className: "bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary" }}>
+                                            <Option value="খাবারের পরে">খাবারের পরে</Option>
+                                            <Option value="খাবারের আগে">খাবারের আগে</Option>
+                                            <Option value="খালি পেটে">খালি পেটে</Option>
+                                            <Option value="প্রয়োজনে">প্রয়োজনে</Option>
+                                        </Select>
+                                    </div>
+                                    {medications.length > 1 && <div className="flex justify-end mt-2"><Button size="sm" color="red" variant="text" onClick={() => removeMedicationField(index)}>Remove</Button></div>}
                                 </div>
                             ))}
-                            <Button size="sm" variant="outlined" onClick={addMedicationField} className="self-start">+ Add More</Button>
-                            <Textarea label="General Notes..." name="generalNotes" value={generalNotes} onChange={(e) => setGeneralNotes(e.target.value)} color="blue-gray" className="dark:text-white"/>
-                            <Textarea label="Suggested Reports (comma separated)..." name="suggestedReports" value={suggestedReports} onChange={(e) => setSuggestedReports(e.target.value)} color="blue-gray" className="dark:text-white"/>
+
+                            <Button size="sm" variant="outlined" onClick={addMedicationField} className="self-start text-light-text-secondary dark:text-dark-text-secondary border-light-text-secondary dark:border-dark-text-secondary hover:bg-gray-500/10">+ Add More Medicine</Button>
+                            <Textarea label="General Notes..." name="generalNotes" value={generalNotes} onChange={(e) => setGeneralNotes(e.target.value)} color="blue-gray" className="dark:text-white" labelProps={{className: "dark:!text-dark-text-secondary"}}/>
+                            <Textarea label="Suggested Reports..." name="suggestedReports" value={suggestedReports} onChange={(e) => setSuggestedReports(e.target.value)} color="blue-gray" className="dark:text-white" labelProps={{className: "dark:!text-dark-text-secondary"}}/>
+                            
                             <div className="flex gap-2 justify-end">
                                 <Button size="sm" variant="text" color="red" onClick={() => setShowMedicationForm(false)}>Cancel</Button>
                                 <Button size="sm" color="green" type="submit">Save Prescription</Button>
@@ -252,58 +364,63 @@ const PatientProfilePage = () => {
                     </CardBody>
                 )}
             </Card>
-
-            {/* Prescription History Card */}
-                <Card className="w-full bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
-                    <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                            <Typography variant="h6" className="text-light-text-primary dark:text-dark-text-primary">Prescription History</Typography>
-                        </div>
-                    </CardHeader>
-                    <CardBody className="flex flex-col gap-4">
-                        {prescriptions && prescriptions.length > 0 ? (
-                            prescriptions.map(p => (
-                                <Card key={p._id} className="p-4 bg-light-bg dark:bg-dark-bg border border-gray-200 dark:border-gray-700">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <Avatar src={p.doctorInfo.image || '/default-avatar.png'} alt={p.doctorInfo.name} size="sm" />
-                                        <div>
-                                            {/* পরিবর্তন: থিম-সচেতন টেক্সটের রঙ যোগ করা হয়েছে */}
-                                            <Typography variant="small" className="font-bold text-light-text-primary dark:text-dark-text-primary">
-                                                Dr. {p.doctorInfo.name}
-                                            </Typography>
-                                            {/* পরিবর্তন: থিম-সচেতন টেক্সটের রঙ যোগ করা হয়েছে */}
-                                            <Typography variant="small" className="opacity-80 text-light-text-secondary dark:text-dark-text-secondary">
-                                                {new Date(p.createdAt).toLocaleDateString()}
-                                            </Typography>
-                                        </div>
-                                        <div className="ml-auto">
-                                            <IconButton variant="text" onClick={() => handleDownloadPdf(p._id)}><ArrowDownTrayIcon className="h-5 w-5 text-light-text-secondary dark:text-dark-text-secondary"/></IconButton>
-                                        </div>
+                            {/* Prescription History Card */}
+            <Card className="w-full bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
+                <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <Typography variant="h6" className="text-light-text-primary dark:text-dark-text-primary">Prescription History</Typography>
+                    </div>
+                </CardHeader>
+                <CardBody className="flex flex-col gap-4">
+                    {prescriptions && prescriptions.length > 0 ? (
+                        prescriptions.slice().reverse().map(p => (
+                            <Card key={p._id} className="p-4 bg-light-bg dark:bg-dark-bg border border-gray-200 dark:border-gray-700">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Avatar src={p.doctorInfo.image || '/default-avatar.png'} alt={p.doctorInfo.name} size="sm" />
+                                    <div>
+                                        {/* FIX: Added theme-aware text colors */}
+                                        <Typography variant="small" className="font-bold text-light-text-primary dark:text-dark-text-primary">
+                                            Dr. {p.doctorInfo.name}
+                                        </Typography>
+                                        <Typography variant="small" className="opacity-80 text-light-text-secondary dark:text-dark-text-secondary">
+                                            {new Date(p.createdAt).toLocaleDateString()}
+                                        </Typography>
                                     </div>
-
-                                    <div className="flex flex-col space-y-1 pl-4">
-                                        {p.medications.map((med, index) => (
-                                            med.medicationName && (
-                                                <div key={index} className="flex flex-row items-start">
-                                                    <Typography variant="small" as="span" className="w-6 font-bold text-light-text-secondary dark:text-dark-text-secondary">
-                                                        {index + 1}.
-                                                    </Typography>
-                                                    <Typography variant="small" as="div" className="flex-1 text-light-text-primary dark:text-dark-text-primary">
-                                                        <strong>{med.medicationName}</strong> - {med.dosage || 'N/A'}
-                                                    </Typography>
-                                                </div>
-                                            )
-                                        ))}
+                                    <div className="ml-auto">
+                                        <IconButton variant="text" onClick={() => handleDownloadPdf(p._id)}>
+                                            {/* FIX: Added theme-aware icon color */}
+                                            <ArrowDownTrayIcon className="h-5 w-5 text-light-text-secondary dark:text-dark-text-secondary"/>
+                                        </IconButton>
                                     </div>
-                                    
-                                    {/* পরিবর্তন: থিম-সচেতন টেক্সটের রঙ যোগ করা হয়েছে */}
-                                    {p.generalNotes && <Typography variant="small" className="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600 text-light-text-primary dark:text-dark-text-primary"><strong>Notes:</strong> {p.generalNotes}</Typography>}
-                                    {p.suggestedReports && p.suggestedReports.length > 0 && <Typography variant="small" className="mt-2 text-light-text-primary dark:text-dark-text-primary"><strong>Tests:</strong> {p.suggestedReports.join(', ')}</Typography>}
-                                </Card>
-                            ))
-                        ) : (<Typography variant="small" className="opacity-80 text-center p-4">No prescriptions found.</Typography>)}
-                    </CardBody>
-                </Card>
+                                </div>
+
+                                <div className="flex flex-col space-y-1 pl-4">
+                                    {p.medications.map((med, index) => (
+                                        med.medicationName && (
+                                            <div key={index} className="flex flex-row items-start">
+                                                {/* FIX: Added theme-aware text colors */}
+                                                <Typography variant="small" as="span" className="w-6 font-bold text-light-text-secondary dark:text-dark-text-secondary">
+                                                    {index + 1}.
+                                                </Typography>
+                                                <Typography variant="small" as="div" className="flex-1 text-light-text-primary dark:text-dark-text-primary">
+                                                    <strong>{med.medicationName}</strong>
+                                                    {med.dosage && ` - ${med.dosage}`}
+                                                    {med.frequency && `, ${med.frequency}`}
+                                                    {med.instruction && ` (${med.instruction})`}
+                                                </Typography>
+                                            </div>
+                                        )
+                                    ))}
+                                </div>
+                                
+                                {/* FIX: Added theme-aware text colors */}
+                                {p.generalNotes && <Typography variant="small" className="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600 text-light-text-primary dark:text-dark-text-primary"><strong>Notes:</strong> {p.generalNotes}</Typography>}
+                                {p.suggestedReports && p.suggestedReports.length > 0 && <Typography variant="small" className="mt-2 text-light-text-primary dark:text-dark-text-primary"><strong>Tests:</strong> {p.suggestedReports.join(', ')}</Typography>}
+                            </Card>
+                        ))
+                    ) : (<Typography variant="small" className="opacity-80 text-center p-4">No prescriptions found.</Typography>)}
+                </CardBody>
+            </Card>
 
             {/* Reports Card */}
                 <Card className="w-full bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
@@ -377,7 +494,28 @@ const PatientProfilePage = () => {
                         </List>
                     </CardBody>
             </Card>
-            
+            <Dialog open={isDetailsModalOpen} handler={closeDetailsModal} className="bg-light-card dark:bg-dark-card ...">
+                <DialogHeader className="flex justify-between  text-light-text-primary dark:text-dark-text-primary">
+                    <Typography variant="h5" color="inherit">{selectedMedicine?.brandName}</Typography>
+                    <IconButton variant="text" color="blue-gray" onClick={closeDetailsModal}><XMarkIcon className="h-5 w-5" /></IconButton>
+                </DialogHeader>
+                <DialogBody divider className="border-t border-b ...">
+                    {selectedMedicine && (
+                        <div className="flex flex-col gap-2 text-light-text-primary dark:text-dark-text-primary">
+                            <p><strong>Generic Name:</strong> {selectedMedicine.genericName}</p>
+                            <p><strong>Strength:</strong> {selectedMedicine.strength}</p>
+                            <p><strong>Manufacturer:</strong> {selectedMedicine.manufacturer}</p>
+                            <p><strong>Dosage Form:</strong> {selectedMedicine.dosageForm}</p>
+                            <p><strong>Package Container:</strong> {selectedMedicine.packageContainer}</p>
+                            <p><strong>Indications:</strong> {selectedMedicine.indications}</p>
+                        </div>
+                    )}
+                </DialogBody>
+                <DialogFooter>
+                    <Button variant="gradient" color="green" onClick={closeDetailsModal}>Close</Button>
+                </DialogFooter>
+            </Dialog>
+            </div>
         </div>
     );
 };
