@@ -38,7 +38,6 @@ export async function GET(request) {
     }
 }
 
-// রোগীর প্রোফাইল আপডেট করার ফাংশন
 export async function PATCH(request) {
     const session = await getServerSession(authOptions);
     if (!session || session.user.role !== 'patient') {
@@ -47,36 +46,33 @@ export async function PATCH(request) {
 
     try {
         await dbConnect();
-        const data = await request.json();
+        const body = await request.json();
         const userId = session.user.id;
+        const { name, image, report, ...profileData } = body;
 
         // User মডেলে নাম ও ছবি আপডেট করা (যদি থাকে)
-        if (data.name || data.image) {
-            await User.findByIdAndUpdate(userId, {
-                name: data.name,
-                image: data.image,
-            });
+        if (name || image) {
+            const userUpdate = {};
+            if (name) userUpdate.name = name;
+            if (image) userUpdate.image = image;
+            await User.findByIdAndUpdate(userId, userUpdate);
         }
         
-        const patientProfile = await PatientProfile.findOne({ user: userId });
-        if (!patientProfile) {
-            return NextResponse.json({ success: false, message: "Patient profile not found." }, { status: 404 });
+        // PatientProfile আপডেটের জন্য পে-লোড তৈরি করা
+        const updatePayload = { $set: profileData };
+        if (report) {
+            updatePayload.$push = { reports: report };
         }
-        
-        // **পরিবর্তন:** শুধুমাত্র যে ডেটাগুলো আসছে, সেগুলোই আপডেট করা হচ্ছে
-        if (data.age !== undefined) patientProfile.age = data.age;
-        if (data.height !== undefined) patientProfile.height = data.height;
-        if (data.weight !== undefined) patientProfile.weight = data.weight;
-        if (data.bloodPressure !== undefined) patientProfile.bloodPressure = data.bloodPressure;
 
-        // রিপোর্ট যোগ করা হচ্ছে (যদি থাকে)
-        if (data.report) {
-            patientProfile.reports.push(data.report);
-        }
-        
-        await patientProfile.save();
+        // findOneAndUpdate ব্যবহার করে প্রোফাইল আপডেট বা তৈরি করা
+        const updatedProfile = await PatientProfile.findOneAndUpdate(
+            { user: userId },
+            updatePayload,
+            { new: true, upsert: true, runValidators: true } // new: true আপডেট করা ডকুমেন্টটি ফেরত দেয়, upsert: true প্রোফাইল না থাকলে নতুন তৈরি করে
+        );
 
-        return NextResponse.json({ success: true, message: "Profile updated successfully!" });
+        return NextResponse.json({ success: true, message: "Profile updated successfully!", profile: updatedProfile });
+
     } catch (error) {
         console.error("Error updating patient profile:", error);
         return NextResponse.json({ success: false, message: "Server error" }, { status: 500 });
