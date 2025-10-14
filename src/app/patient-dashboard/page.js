@@ -1,15 +1,19 @@
 // src/app/patient-dashboard/page.js
 "use client";
 
-import { ArrowDownTrayIcon, DocumentTextIcon, EyeIcon, PencilIcon, PhotoIcon } from '@heroicons/react/24/solid';
+import { ArrowDownTrayIcon, DocumentTextIcon, EyeIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import {
     Avatar,
     Button,
     Card,
     CardBody,
     CardHeader,
+    Dialog,
+    DialogBody,
+    DialogHeader,
+    DialogFooter,
     IconButton,
-    Input, List, ListItem,
+    List, ListItem,
     ListItemSuffix,
     Spinner,
     Typography
@@ -27,6 +31,10 @@ const PatientDashboardPage = () => {
     const [imagePreview, setImagePreview] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploadingReport, setIsUploadingReport] = useState(false);
+    // ===== নতুন state যোগ করা হয়েছে =====
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+    const [selectedMedicine, setSelectedMedicine] = useState(null);
+    const [isFetchingDetails, setIsFetchingDetails] = useState(false);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -107,6 +115,23 @@ const PatientDashboardPage = () => {
             setIsSaving(false);
         }
     };
+    // ===== নতুন ফাংশন যোগ করা হয়েছে =====
+    const handleViewMedicineDetails = async (medicationName) => {
+        setIsFetchingDetails(true);
+        setIsDetailsModalOpen(true);
+        try {
+            const res = await fetch(`/api/medicines/search?name=${encodeURIComponent(medicationName)}`);
+            if (!res.ok) throw new Error("Medicine details not found.");
+            const data = await res.json();
+            setSelectedMedicine(data);
+        } catch (error) {
+            console.error(error);
+            setSelectedMedicine({ brandName: medicationName, indications: 'Details not available.' });
+        } finally {
+            setIsFetchingDetails(false);
+        }
+    };
+    const closeModal = () => setIsDetailsModalOpen(false);
     
     const handleReportUpload = async (e) => {
         const file = e.target.files?.[0];
@@ -139,6 +164,7 @@ const PatientDashboardPage = () => {
         }
     };
 
+
     if (loading) return <div className="flex justify-center items-center h-full"><Spinner className="h-12 w-12" /></div>;
     if (!dashboardData) return <Typography className="text-center p-10">Could not load your profile data. Please try again later.</Typography>;
 
@@ -161,38 +187,24 @@ const PatientDashboardPage = () => {
             <div className="flex flex-col gap-6">
                 <Card className="w-full bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
                     <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
-                         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                             <Typography variant="h6" className="text-light-text-primary dark:text-dark-text-primary">Your Vitals & Profile</Typography>
-                            {!isEditing && <IconButton variant="text" onClick={() => setIsEditing(true)}><PencilIcon className="h-5 w-5 text-light-text-secondary dark:text-dark-text-secondary"/></IconButton>}
                         </div>
                     </CardHeader>
                     <CardBody>
-                        {isEditing ? (
-                            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                                <Input crossOrigin={""} label="Name" name="name" value={formData.name} onChange={handleInputChange} color="blue-gray" className="dark:text-white" />
-                                <Input crossOrigin={""} type="file" label="Profile Picture" name="image" onChange={handleFileChange} accept="image/*" color="blue-gray" className="dark:text-white" />
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Input crossOrigin={""} label="Age" name="age" value={formData.age} onChange={handleInputChange} color="blue-gray" className="dark:text-white" />
-                                    <Input crossOrigin={""} label="Height" name="height" value={formData.height} onChange={handleInputChange} color="blue-gray" className="dark:text-white" />
-                                    <Input crossOrigin={""} label="Weight" name="weight" value={formData.weight} onChange={handleInputChange} color="blue-gray" className="dark:text-white" />
-                                    <Input crossOrigin={""} label="Blood Pressure" name="bloodPressure" value={formData.bloodPressure} onChange={handleInputChange} color="blue-gray" className="dark:text-white" />
-                                </div>
-                                <div className="flex gap-2 justify-end mt-2">
-                                    <Button size="sm" variant="text" color="red" onClick={() => setIsEditing(false)}>Cancel</Button>
-                                    <Button size="sm" color="green" type="submit" disabled={isSaving}>{isSaving ? <Spinner className="h-4 w-4" /> : 'Save'}</Button>
-                                </div>
-                            </form>
-                        ) : (
-                            <ul className="grid grid-cols-2 gap-4">
-                                <li><strong>Age:</strong> {profile.age || 'N/A'}</li>
-                                <li><strong>Height:</strong> {profile.height || 'N/A'}</li>
-                                <li><strong>Weight:</strong> {profile.weight || 'N/A'}</li>
-                                <li><strong>Blood Pressure:</strong> {profile.bloodPressure || 'N/A'}</li>
-                            </ul>
-                        )}
+                        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            <li><strong>Age:</strong> {profile.age || 'N/A'}</li>
+                            <li><strong>Height:</strong> {profile.height || 'N/A'}</li>
+                            <li><strong>Weight:</strong> {profile.weight || 'N/A'}</li>
+                            <li><strong>Blood Pressure:</strong> {profile.bloodPressure || 'N/A'}</li>
+                            <li><strong>Blood Group:</strong> {profile.bloodGroup || 'N/A'}</li>
+                            <li><strong>Phone:</strong> {profile.phone || 'N/A'}</li>
+                            <li className="col-span-2 sm:col-span-3"><strong>Address:</strong> {profile.address || 'N/A'}</li>
+                        </ul>
                     </CardBody>
                 </Card>
 
+                {/* --- Your Prescriptions Card (আপডেট করা হয়েছে) --- */}
                 <Card className="bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
                     <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
                         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -200,8 +212,12 @@ const PatientDashboardPage = () => {
                         </div>
                     </CardHeader>
                     <CardBody className="flex flex-col gap-4 p-4">
-                        {prescriptions && prescriptions.length > 0 ? prescriptions.slice().reverse().map(p => (
-                            <Card key={p._id} className="p-4 bg-light-bg dark:bg-dark-bg border border-gray-200 dark:border-gray-700">
+                        {prescriptions && prescriptions.length > 0 
+                            ? [...prescriptions]
+                                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                                .map(p => (
+
+                            <Card key={p._id} className="p-4 bg-light-bg dark:bg-dark-bg ...">
                                 <div className="flex items-center gap-3 mb-2">
                                     <Avatar src={p.doctorInfo.image || '/default-avatar.png'} alt={p.doctorInfo.name} size="sm" />
                                     <div>
@@ -212,18 +228,31 @@ const PatientDashboardPage = () => {
                                         <IconButton variant="text" onClick={() => handleDownloadPdf(p._id)}><ArrowDownTrayIcon className="h-5 w-5 text-light-text-secondary dark:text-dark-text-secondary"/></IconButton>
                                     </div>
                                 </div>
-                                <div className="flex flex-col space-y-1 pl-4">
+                                <div className="flex flex-col space-y-2 pl-4">
                                     {p.medications.map((med, index) => (
                                         med.medicationName && (
-                                            <div key={index} className="flex flex-row items-start">
-                                                <Typography variant="small" as="span" className="w-6 font-bold text-light-text-secondary dark:text-dark-text-secondary">{index + 1}.</Typography>
+                                            <div 
+                                                key={index} 
+                                                onClick={() => handleViewMedicineDetails(med.medicationName)}
+                                                className="flex flex-row items-center gap-2 p-2 rounded-lg cursor-pointer bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                            >
+                                                <Typography variant="small" as="span" className="w-6 font-bold text-light-text-secondary dark:text-dark-text-secondary">
+                                                    {index + 1}.
+                                                </Typography>
+                                                
                                                 <Typography variant="small" as="div" className="flex-1 text-light-text-primary dark:text-dark-text-primary">
-                                                    <strong>{med.medicationName}</strong> - {med.dosage || 'N/A'}
+                                                    <strong>{med.medicationName}</strong>
+                                                    {med.dosage && ` - ${med.dosage}`}
+                                                    {med.frequency && `, ${med.frequency}`}
+                                                    {med.instruction && ` (${med.instruction})`}
                                                 </Typography>
                                             </div>
                                         )
                                     ))}
+
                                 </div>
+                                {p.generalNotes && <Typography variant="small" className="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600 text-light-text-primary dark:text-dark-text-primary"><strong>Notes:</strong> {p.generalNotes}</Typography>}
+                                {p.suggestedReports && p.suggestedReports.length > 0 && <Typography variant="small" className="mt-2 text-light-text-primary dark:text-dark-text-primary"><strong>Tests:</strong> {p.suggestedReports.join(', ')}</Typography>}
                             </Card>
                         )) : <Typography variant="small" className="text-center">No prescriptions yet.</Typography>}
                     </CardBody>
@@ -235,11 +264,6 @@ const PatientDashboardPage = () => {
                             <Typography variant="h6" className="text-light-text-primary dark:text-dark-text-primary">Your Reports</Typography>
 
                             <div className="flex items-center gap-2 text-light-text-primary dark:text-dark-text-primary">
-                            <a href="https://hms-psi-three.vercel.app/" target="_blank" rel="noopener noreferrer">
-                                <Button size="sm" variant="filled" color="blue-gray">
-                                    Generate Report
-                                </Button>
-                            </a>
                             <label 
                                 htmlFor="report-upload" 
                                 className={`cursor-pointer inline-block text-sm font-medium py-2 px-4 rounded-lg transition-colors 
@@ -281,9 +305,29 @@ const PatientDashboardPage = () => {
                         </List>
                     </CardBody>
                 </Card>
-                
-                
             </div>
+            {/* ===== Medicine Details Modal ===== */}
+            <Dialog open={isDetailsModalOpen} handler={closeModal} className="bg-light-card dark:bg-dark-card ...">
+                            <DialogHeader className="flex justify-between  text-light-text-primary dark:text-dark-text-primary">
+                                <Typography variant="h5" color="inherit">{selectedMedicine?.brandName}</Typography>
+                                <IconButton variant="text" color="blue-gray" onClick={closeModal}><XMarkIcon className="h-5 w-5" /></IconButton>
+                            </DialogHeader>
+                            <DialogBody divider className="border-t border-b ...">
+                                {selectedMedicine && (
+                                    <div className="flex flex-col gap-2 text-light-text-primary dark:text-dark-text-primary">
+                                        <p><strong>Generic Name:</strong> {selectedMedicine.genericName}</p>
+                                        <p><strong>Strength:</strong> {selectedMedicine.strength}</p>
+                                        <p><strong>Manufacturer:</strong> {selectedMedicine.manufacturer}</p>
+                                        <p><strong>Dosage Form:</strong> {selectedMedicine.dosageForm}</p>
+                                        <p><strong>Package Container:</strong> {selectedMedicine.packageContainer}</p>
+                                        <p><strong>Indications:</strong> {selectedMedicine.indications}</p>
+                                    </div>
+                                )}
+                            </DialogBody>
+                            <DialogFooter>
+                                <Button variant="gradient" color="green" onClick={closeModal}>Close</Button>
+                            </DialogFooter>
+                        </Dialog>
         </div>
     );
 };

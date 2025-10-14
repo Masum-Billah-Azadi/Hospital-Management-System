@@ -2,55 +2,45 @@
 import mongoose from 'mongoose';
 
 const PatientProfileSchema = new mongoose.Schema({
-    // রোগীর নিজের User ID, যা User মডেলের সাথে লিঙ্ক করা
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
         unique: true,
     },
-    // রোগীকে দেখা সব ডাক্তারদের User ID-এর তালিকা
     doctors: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     }],
-    // রোগীর মেডিকেল তথ্য
-    age: {
-    type: String,
-    },
-
-    // **নতুন:** লিঙ্গ (Gender)
+    age: { type: String },
     gender: {
         type: String,
-        enum: ['Male', 'Female', 'Other'], // নির্দিষ্ট মান সেট করা ভালো
+        enum: ['Male', 'Female', 'Other'],
     },
-    height: {
-        type: String, // যেমন: "5' 8\""
-    },
-    weight: {
-        type: String, // যেমন: "70 kg"
-    },
-    bloodPressure: {
-        type: String, // যেমন: "120/80 mmHg"
-    },
-    // **নতুন:** রোগ নির্ণয়ের ইতিহাস
-    diagnosis: {
+    height: { type: String },
+    weight: { type: String },
+    bloodPressure: { type: String },
+    diagnosis: { type: String },
+
+    // ===== নতুন ফিল্ডগুলো যোগ করা হয়েছে =====
+    phone: {
         type: String,
+        trim: true,
     },
-    // **নতুন:** আপলোড করা রিপোর্টের তালিকা
+    bloodGroup: {
+        type: String, // যেমন: "A+", "O-", etc.
+        trim: true,
+    },
+    address: {
+        type: String,
+        trim: true,
+    },
+    // ===================================
+
     reports: [{
-        fileName: {
-            type: String,
-            required: true
-        },
-        url: {
-            type: String,
-            required: true
-        },
-        uploadedAt: {
-            type: Date,
-            default: Date.now
-        }
+        fileName: { type: String, required: true },
+        url: { type: String, required: true },
+        uploadedAt: { type: Date, default: Date.now }
     }],
 }, {
     timestamps: true,

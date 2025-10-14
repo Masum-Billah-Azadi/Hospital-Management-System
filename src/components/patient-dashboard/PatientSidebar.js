@@ -4,13 +4,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { Card, Typography, List, ListItem, ListItemPrefix } from "@material-tailwind/react";
-import { HomeIcon, UserGroupIcon, CalendarDaysIcon, PowerIcon, HeartIcon } from "@heroicons/react/24/solid";
+// পরিবর্তন: UserCircleIcon ইম্পোর্ট করুন
+import { HomeIcon, UserGroupIcon, CalendarDaysIcon, PowerIcon, HeartIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 const navLinks = [
     { href: "/patient-dashboard", label: "Dashboard", icon: <HomeIcon className="h-5 w-5" /> },
     { href: "/patient-dashboard/doctors", label: "Find a Doctor", icon: <UserGroupIcon className="h-5 w-5" /> },
     { href: "/patient-dashboard/appointments", label: "My Appointments", icon: <CalendarDaysIcon className="h-5 w-5" /> },
+    // পরিবর্তন: নতুন "My Profile" লিঙ্ক যোগ করা হয়েছে
+    { href: "/patient-dashboard/profile", label: "My Profile", icon: <UserCircleIcon className="h-5 w-5" /> },
 ];
 
 const PatientSidebar = () => {
@@ -23,7 +26,6 @@ const PatientSidebar = () => {
                     <div className="mb-2 p-4">
                         <Typography variant="h5" className="text-light-text-primary dark:text-dark-text-primary">Patient Portal</Typography>
                     </div>
-                    {/* পরিবর্তন: nav-কে List দিয়ে প্রতিস্থাপন করা হয়েছে */}
                     <List>
                         {navLinks.map(link => {
                             const isActive = pathname === link.href;
