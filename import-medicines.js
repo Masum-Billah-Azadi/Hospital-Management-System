@@ -19,19 +19,18 @@ async function importData() {
         console.log('✅ Existing medicines cleared.');
         
         const results = [];
-        // merged_medicines.csv অথবা আপনার চূড়ান্ত ফাইলের নাম দিন
-        fs.createReadStream('merged_medicines.csv') 
+        fs.createReadStream('masum_medicines.csv') 
             .pipe(csv())
             .on('data', (data) => {
                 // ===== পরিবর্তন: CSV কলামের নামের সাথে মডেলের ফিল্ড মেলানো হচ্ছে =====
                 results.push({
-                    brandName: data['brand name'],
-                    dosageForm: data['dosage form'],
-                    genericName: data['generic'], // CSV-তে কলামের নাম 'generic'
-                    strength: data['strength'],
-                    packageContainer: data['package container'],
-                    manufacturer: data['manufacturer'],
-                    indications: data['indications'],
+                    brandName: data['Medicine'],
+                    dosageForm: data['Type'],
+                    genericName: data['Generic'],
+                    strength: data['Strength'],
+                    packageContainer: data['Price'],
+                    manufacturer: data['Brand'],
+                    indications: data['Indication'],
                 });
             })
             .on('end', async () => {
