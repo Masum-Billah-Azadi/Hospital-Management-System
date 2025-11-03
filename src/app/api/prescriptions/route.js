@@ -18,7 +18,7 @@ export async function POST(request) {
   try {
     await dbConnect();
 
-    const { patientProfileId, medications, generalNotes, suggestedReports } = await request.json();
+    const { patientProfileId, medications, generalNotes, suggestedReports, followUp, } = await request.json();
     const doctorId = session.user.id;
 
     // ভ্যালিডেশন
@@ -48,6 +48,7 @@ export async function POST(request) {
       medications,
       generalNotes,
       suggestedReports: suggestedReports || [],
+      followUp,
       reports: [], // আপলোড করা রিপোর্টের জন্য খালি অ্যারে
     });
 
