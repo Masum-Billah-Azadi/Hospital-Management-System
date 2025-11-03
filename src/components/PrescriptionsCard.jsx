@@ -10,8 +10,16 @@ import {
   CardHeader,
   IconButton,
   Typography,
+  Badge,
 } from "@material-tailwind/react";
 
+/**
+ * PrescriptionsCard
+ * - Accepts prescriptions array and renders each prescription.
+ * - Shows medications with: name, dosage, price, frequency, instruction, duration.
+ * - Shows prescription-level followUp if present.
+ * - Calls onViewMedicineDetails with the full medication object (not only name).
+ */
 const PrescriptionsCard = ({
   prescriptions = [],
   title = "Prescriptions",
@@ -25,6 +33,21 @@ const PrescriptionsCard = ({
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       )
     : [];
+
+  const renderDuration = (duration) => {
+    if (!duration) return null;
+    const value = duration.value || "";
+    const unit = duration.unit || "";
+    if (!value && unit === "continue") return <Badge color="blue-gray" size="sm">চলবে</Badge>;
+    if (!value) return null;
+    // Map unit keys to readable Bangla labels if needed
+    const unitMap = { day: "দিন", week: "সপ্তাহ", month: "মাস", continue: "চলবে" };
+    return (
+      <span className="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-light-text-secondary dark:text-dark-text-secondary">
+        {value} {unitMap[unit] || unit}
+      </span>
+    );
+  };
 
   return (
     <Card className="bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
@@ -56,10 +79,17 @@ const PrescriptionsCard = ({
                   </Typography>
                   <Typography variant="small" className="opacity-80 text-light-text-secondary dark:text-dark-text-secondary">
                     {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ""}
+                    {p.followUp && p.followUp.value ? (
+                      <span className="ml-3 text-xs inline-flex items-center gap-1 text-light-text-secondary dark:text-dark-text-secondary">
+                        {/* Show follow-up compact */}
+                        🔁 Follow-up: {p.followUp.value}{" "}
+                        {p.followUp.unit === "day" ? "day(s)" : p.followUp.unit === "week" ? "week(s)" : p.followUp.unit === "month" ? "month(s)" : p.followUp.unit}
+                      </span>
+                    ) : null}
                   </Typography>
                 </div>
 
-                <div className="ml-auto">
+                <div className="ml-auto flex items-center gap-1">
                   <IconButton variant="text" onClick={() => onDownloadPdf(p._id)}>
                     <ArrowDownTrayIcon className="h-5 w-5 text-light-text-secondary dark:text-dark-text-secondary" />
                   </IconButton>
@@ -72,19 +102,26 @@ const PrescriptionsCard = ({
                     med.medicationName ? (
                       <div
                         key={index}
-                        onClick={() => onViewMedicineDetails(med.medicationName)}
+                        onClick={() => onViewMedicineDetails(med)}
                         className="flex flex-row items-center gap-2 p-2 rounded-lg cursor-pointer bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                       >
                         <Typography variant="small" as="span" className="w-6 font-bold text-light-text-secondary dark:text-dark-text-secondary">
                           {index + 1}.
                         </Typography>
 
-                        <Typography variant="small" as="div" className="flex-1 text-light-text-primary dark:text-dark-text-primary">
-                          <strong>{med.medicationName}</strong>
-                          {med.dosage && ` - ${med.dosage}`}
-                          {med.frequency && `, ${med.frequency}`}
-                          {med.instruction && ` (${med.instruction})`}
-                        </Typography>
+                        <div className="flex-1">
+                          <Typography variant="small" as="div" className="flex items-center gap-2 text-light-text-primary dark:text-dark-text-primary">
+                            <strong className="mr-1">{med.medicationName}</strong>
+                            {med.dosage && <span className="opacity-80 text-xs">— {med.dosage}</span>}
+                            {med.price && <span className="ml-2 opacity-80 text-xs">({`৳${med.price}`})</span>}
+                          </Typography>
+
+                          <div className="mt-1 flex items-center gap-3">
+                            {med.frequency && <span className="text-xs opacity-80">{med.frequency}</span>}
+                            {med.instruction && <span className="text-xs opacity-80">· {med.instruction}</span>}
+                            {med.duration ? <span className="ml-auto">{renderDuration(med.duration)}</span> : null}
+                          </div>
+                        </div>
 
                         <EyeIcon className="h-5 w-5 text-light-text-secondary dark:text-dark-text-secondary opacity-50" />
                       </div>

@@ -21,7 +21,14 @@ const MedicationSchema = new mongoose.Schema({
     type: String, // যেমন: "খাবারের পরে"
     trim: true,
   },
-  // ===== পরিবর্তন শেষ =====
+  price: { 
+    type: String, // মেডিসিনের দাম
+    trim: true, 
+  },
+  duration: {
+    value: { type: String, default: "" },
+    unit: { type: String, default: "day" },
+  },
   notes: {
     type: String, // প্রতিটি মেডিসিনের জন্য আলাদা নোট
     trim: true,
@@ -52,6 +59,10 @@ const PrescriptionSchema = new mongoose.Schema({
   generalNotes: {
     type: String,
     trim: true,
+  },
+  followUp: {
+    value: { type: String, default: "" },
+    unit: { type: String, default: "day" },
   },
   // ডাক্তারের পরামর্শ দেওয়া রিপোর্ট
   suggestedReports: {

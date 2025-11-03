@@ -1,4 +1,3 @@
-// src/app/api/medicines/search/route.js
 import dbConnect from "@/lib/dbConnect";
 import Medicine from "@/models/Medicine.model";
 import { NextResponse } from "next/server";
@@ -14,9 +13,8 @@ export async function GET(request) {
     try {
         await dbConnect();
 
-        // ব্র্যান্ডের নাম দিয়ে মেডিসিন খোঁজা হচ্ছে
-        const medicine = await Medicine.findOne({ 
-            brandName: { $regex: `^${brandName}$`, $options: 'i' } 
+        const medicine = await Medicine.findOne({
+            brandName: { $regex: `^${brandName}$`, $options: 'i' }
         });
 
         if (!medicine) {
