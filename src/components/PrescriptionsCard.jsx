@@ -102,7 +102,10 @@ const PrescriptionsCard = ({
                     med.medicationName ? (
                       <div
                         key={index}
-                        onClick={() => onViewMedicineDetails(med)}
+                        onClick={() => onViewMedicineDetails({
+                          _id: med._id || null,
+                          name: med.medicationName
+                        })}
                         className="flex flex-row items-center gap-2 p-2 rounded-lg cursor-pointer bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                       >
                         <Typography variant="small" as="span" className="w-6 font-bold text-light-text-secondary dark:text-dark-text-secondary">

@@ -154,6 +154,7 @@ const PatientProfilePage = () => {
         instruction: "",
         price: medicine.price || "",
         duration: { value: "", unit: "day" },
+        _id: medicine._id || null 
       },
     ]);
 
@@ -165,30 +166,36 @@ const PatientProfilePage = () => {
    ✅ Medicine Details Modal
   ============================================================ */
   const handleViewDetails = async (medicine) => {
-    setIsFetchingDetails(true);
-    setIsDetailsModalOpen(true);
+  setIsFetchingDetails(true);
+  setIsDetailsModalOpen(true);
 
-    try {
-      const url = medicine._id
-        ? `/api/medicines/${medicine._id}`
-        : `/api/medicines/search?name=${encodeURIComponent(
-            medicine.brandName || medicine,
-          )}`;
+  try {
+    let url;
 
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Medicine details not found.");
-
-      const data = await res.json();
-      setSelectedMedicine(data);
-    } catch {
-      setSelectedMedicine({
-        brandName: medicine.brandName || medicine,
-        indications: "Details not available.",
-      });
-    } finally {
-      setIsFetchingDetails(false);
+    if (medicine._id) {
+      url = `/api/medicines/${medicine._id}`;
+    } else {
+      url = `/api/medicines/search?name=${encodeURIComponent(medicine.name)}`;
     }
-  };
+
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok || !data) throw new Error();
+
+    setSelectedMedicine(data);
+
+  } catch {
+    setSelectedMedicine({
+      brandName: medicine.name || "Unknown",
+      strength: "—",
+      price: "—",
+      indications: "No detailed record exists in database."
+    });
+  } finally {
+    setIsFetchingDetails(false);
+  }
+};
+
 
   const closeDetailsModal = () => setIsDetailsModalOpen(false);
 
