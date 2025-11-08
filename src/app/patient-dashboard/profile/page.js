@@ -8,12 +8,13 @@ import {
 } from '@material-tailwind/react';
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const gender = ["Male", "Female"];
 
 const PatientProfilePage = () => {
     // --- All state and logic are preserved and adapted ---
     const { data: session, update } = useSession();
     const [formData, setFormData] = useState({
-        name: '', image: '', phone: '', age: '',
+        name: '', image: '', phone: '', age: '', gender: '',
         height: '', weight: '', bloodPressure: '',
         bloodGroup: '', address: ''
     });
@@ -42,6 +43,7 @@ const PatientProfilePage = () => {
                         weight: data.profile.weight || '',
                         bloodPressure: data.profile.bloodPressure || '',
                         bloodGroup: data.profile.bloodGroup || '',
+                        gender: data.profile.gender || '',
                         address: data.profile.address || '',
                     });
                 }
@@ -148,6 +150,9 @@ const PatientProfilePage = () => {
                         <Input crossOrigin={""} label="Weight" name="weight" value={formData.weight} onChange={handleInputChange} color="blue-gray" className="dark:text-white" />
                         <Select label="Blood Group" name="bloodGroup" value={formData.bloodGroup} onChange={(v) => handleInputChange({ target: { name: 'bloodGroup', value: v } })} animate={{mount: {y: 0}, unmount: {y: 25}}} color="blue-gray" className="dark:text-white" menuProps={{className: "bg-light-card dark:bg-dark-card ..."}}>
                             {bloodGroups.map(group => <Option key={group} value={group}>{group}</Option>)}
+                        </Select>
+                        <Select label="Gender" name="gender" value={formData.gender} onChange={(v) => handleInputChange({ target: { name: 'gender', value: v } })} animate={{mount: {y: 0}, unmount: {y: 25}}} color="blue-gray" className="dark:text-white" menuProps={{className: "bg-light-card dark:bg-dark-card ..."}}>
+                            {gender.map(group => <Option key={group} value={group}>{group}</Option>)}
                         </Select>
                     </div>
                     
