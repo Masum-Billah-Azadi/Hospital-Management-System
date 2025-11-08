@@ -51,7 +51,18 @@ const getHtmlTemplate = (prescription, patient, doctor, qrCodeDataURL) => {
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
         body { font-family: 'Roboto', sans-serif; margin:0; padding:0; color:#222; }
-        .page { width:210mm; padding:16mm; box-sizing:border-box; background:#fff; min-height:297mm; position:relative; }
+        .page {
+          width:210mm;
+          padding:16mm;
+          box-sizing:border-box;
+          min-height:297mm;
+          position:relative;
+
+          background-image: url("https://res.cloudinary.com/dv0zvnie6/image/upload/v1762587743/rim4efqgtzqh08chflag.png");
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+        }
         .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
         .doctor { color:#0d2c4b; }
         .doctor h1 { margin:0; font-size:22px; }
@@ -86,11 +97,11 @@ const getHtmlTemplate = (prescription, patient, doctor, qrCodeDataURL) => {
           <div><strong>Date:</strong> ${new Date(prescription.createdAt).toLocaleDateString()}</div>
           <div><strong>Follow-Up:</strong> ${prescription.followUp && prescription.followUp.value ? `${prescription.followUp.value} ${prescription.followUp.unit || ''}` : (prescription.followUp && prescription.followUp.unit ? prescription.followUp.unit : 'N/A')}</div>
           <div><strong>Age:</strong> ${patient.age || 'N/A'}</div>
-          <div><strong>Weight:</strong> ${patient.weight ? patient.weight + ' KG' : 'N/A'}</div>
+          <div><strong>Weight:</strong> ${patient.weight ? patient.weight : 'N/A'}</div>
           <div><strong>Gender:</strong> ${patient.gender || 'N/A'}</div>
-          <div><strong>Phone:</strong> ${patient.user?.phone || 'N/A'}</div>
+          <div><strong>Phone:</strong> ${patient.phone || 'N/A'}</div>
           <div><strong>Address:</strong> ${patient.address || 'N/A'}</div>
-          <div><strong>Diagnosis:</strong> ${patient.diagnosis || 'N/A'}</div>
+          <div><strong>Blood Group:</strong> ${patient.bloodGroup || 'N/A'}</div>
         </div>
 
         <div class="rx">
