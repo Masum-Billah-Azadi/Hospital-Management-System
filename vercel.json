@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "src/app/api/prescriptions/[id]/pdf/route.js": {
+      "maxDuration": 45,
+      "memory": 1024
+    }
+  }
+}
