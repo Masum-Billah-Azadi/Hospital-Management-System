@@ -23,6 +23,7 @@ import { useCallback, useEffect, useState } from "react";
 import MedicineDetailsModal from "@/components/MedicineDetailsModal";
 import PrescriptionsCard from "@/components/PrescriptionsCard";
 import ReportSection from "@/components/ReportSection";
+import PrescriptionGenerateSection from "@/components/PrescriptionGenerateSection";
 
 const PatientProfilePage = () => {
   const { patientId } = useParams();
@@ -87,6 +88,7 @@ const PatientProfilePage = () => {
         height: data.height || "",
         weight: data.weight || "",
         bloodPressure: data.bloodPressure || "",
+        gender: data.gender || "",
       });
     } catch (error) {
       console.error(error);
@@ -735,7 +737,11 @@ const PatientProfilePage = () => {
         handleReportUpload={handleReportUploadByDoctor}
         showGenerateButton={true}
         pageType="doctor"
+        user={user}
+        patient={patientData}
       />
+
+      <PrescriptionGenerateSection user={user} patient={patientData} />
 
       {/* Modal */}
       <MedicineDetailsModal

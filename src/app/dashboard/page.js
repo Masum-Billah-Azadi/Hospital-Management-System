@@ -81,6 +81,11 @@ const DoctorDashboardPage = () => {
                     icon={<span className="text-2xl">🩸</span>} // Emoji can work too
                     link="http://anirban.lovestoblog.com/"
                 />
+                <StatCard 
+                    title="Northern Pharmacy" 
+                    icon={<span className="text-2xl">💊</span>}
+                    link="https://northern-pharmacy.vercel.app/"
+                />
             </section>
 
             {/* Appointments Section */}

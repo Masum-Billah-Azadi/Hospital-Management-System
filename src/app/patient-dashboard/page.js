@@ -4,6 +4,8 @@
 import MedicineDetailsModal from '@/components/MedicineDetailsModal';
 import PrescriptionsCard from '@/components/PrescriptionsCard';
 import ReportSection from "@/components/ReportSection";
+import PrescriptionGenerateSection from "@/components/PrescriptionGenerateSection";
+
 import {
     Avatar,
     Card,
@@ -205,6 +207,12 @@ const PatientDashboardPage = () => {
                     onViewMedicineDetails={handleViewMedicineDetails}
                     emptyText="No prescriptions yet."
                 />
+                {/* নতুন: file-based prescriptions (PDF/Image) */}
+                    <PrescriptionGenerateSection
+                    user={profile.user}
+                    patient={profile}
+                    pageType="patient"
+                    />
 
                 {/* Reports Card (keep your existing implementation) */}
                 <ReportSection
@@ -213,6 +221,14 @@ const PatientDashboardPage = () => {
                 handleReportUpload={handleReportUpload}
                 showGenerateButton={false}
                 pageType="patient"
+                />
+
+                   {/* Doctor-generated medical reports (read-only, from MongoDB medical_reports) */}
+                <ReportSection
+                  pageType="doctor"
+                  showGenerateButton={false}
+                  user={profile.user}
+                  patient={profile}
                 />
                 
             </div>
