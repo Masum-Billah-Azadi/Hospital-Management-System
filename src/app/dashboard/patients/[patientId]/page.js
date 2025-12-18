@@ -21,9 +21,9 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import MedicineDetailsModal from "@/components/MedicineDetailsModal";
+import PrescriptionGenerateSection from "@/components/PrescriptionGenerateSection";
 import PrescriptionsCard from "@/components/PrescriptionsCard";
 import ReportSection from "@/components/ReportSection";
-import PrescriptionGenerateSection from "@/components/PrescriptionGenerateSection";
 
 const PatientProfilePage = () => {
   const { patientId } = useParams();
@@ -109,24 +109,20 @@ const PatientProfilePage = () => {
       setIsFetchingSuggestions(true);
       fetch(
         `/api/medicines/suggest?q=${encodeURIComponent(
-          searchTerm,
-        )}&page=${pageToFetch}`,
+          searchTerm
+        )}&page=${pageToFetch}`
       )
         .then((res) => res.json())
         .then((data) => {
           if (replaceList) setSuggestions(data.suggestions || []);
-          else
-            setSuggestions((prev) => [
-              ...prev,
-              ...(data.suggestions || []),
-            ]);
+          else setSuggestions((prev) => [...prev, ...(data.suggestions || [])]);
 
           setHasMoreSuggestions(data.hasMore || false);
           setCurrentPage(pageToFetch);
         })
         .finally(() => setIsFetchingSuggestions(false));
     },
-    [searchTerm],
+    [searchTerm]
   );
 
   useEffect(() => {
@@ -156,7 +152,7 @@ const PatientProfilePage = () => {
         instruction: "",
         price: medicine.price || "",
         duration: { value: "", unit: "day" },
-        _id: medicine._id || null 
+        _id: medicine._id || null,
       },
     ]);
 
@@ -168,36 +164,34 @@ const PatientProfilePage = () => {
    ✅ Medicine Details Modal
   ============================================================ */
   const handleViewDetails = async (medicine) => {
-  setIsFetchingDetails(true);
-  setIsDetailsModalOpen(true);
+    setIsFetchingDetails(true);
+    setIsDetailsModalOpen(true);
 
-  try {
-    let url;
+    try {
+      let url;
 
-    if (medicine._id) {
-      url = `/api/medicines/${medicine._id}`;
-    } else {
-      url = `/api/medicines/search?name=${encodeURIComponent(medicine.name)}`;
+      if (medicine._id) {
+        url = `/api/medicines/${medicine._id}`;
+      } else {
+        url = `/api/medicines/search?name=${encodeURIComponent(medicine.name)}`;
+      }
+
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!res.ok || !data) throw new Error();
+
+      setSelectedMedicine(data);
+    } catch {
+      setSelectedMedicine({
+        brandName: medicine.name || "Unknown",
+        strength: "—",
+        price: "—",
+        indications: "No detailed record exists in database.",
+      });
+    } finally {
+      setIsFetchingDetails(false);
     }
-
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!res.ok || !data) throw new Error();
-
-    setSelectedMedicine(data);
-
-  } catch {
-    setSelectedMedicine({
-      brandName: medicine.name || "Unknown",
-      strength: "—",
-      price: "—",
-      indications: "No detailed record exists in database."
-    });
-  } finally {
-    setIsFetchingDetails(false);
-  }
-};
-
+  };
 
   const closeDetailsModal = () => setIsDetailsModalOpen(false);
 
@@ -210,8 +204,7 @@ const PatientProfilePage = () => {
     if (fieldName) {
       updated[index][fieldName] = eventOrValue;
     } else {
-      updated[index][eventOrValue.target.name] =
-        eventOrValue.target.value;
+      updated[index][eventOrValue.target.name] = eventOrValue.target.value;
     }
 
     setMedications(updated);
@@ -347,6 +340,29 @@ const PatientProfilePage = () => {
       setIsUploading(false);
     }
   };
+  //Delete prescription from prescription history
+  const handleDeletePrescription = async (prescriptionId) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this prescription?"
+    );
+    if (!confirmed) return;
+
+    const res = await fetch(`/api/prescriptions/${prescriptionId}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      alert("Failed to delete prescription");
+      return;
+    }
+
+    // UI update (important)
+    setPatientData((prev) => ({
+      ...prev,
+      prescriptions: prev.prescriptions.filter((p) => p._id !== prescriptionId),
+    }));
+    alert("Prescription deleted successfully");
+  };
 
   /* ===========================================================
    ✅ PDF Download
@@ -382,7 +398,10 @@ const PatientProfilePage = () => {
             <Avatar
               src={
                 user.image ||
-                `https://ui-avatars.com/api/?name=${user.name.replace(/\s/g, "+")}`
+                `https://ui-avatars.com/api/?name=${user.name.replace(
+                  /\s/g,
+                  "+"
+                )}`
               }
               alt={user.name}
               size="xxl"
@@ -397,11 +416,23 @@ const PatientProfilePage = () => {
 
       {/* Vitals */}
       <Card className="bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
-        <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
+        <CardHeader
+          floated={false}
+          shadow={false}
+          className="rounded-none bg-transparent"
+        >
           <div className="flex items-center justify-between p-4 border-b border-gray-300 dark:border-gray-700">
-            <Typography variant="h6" className="text-light-text-primary dark:text-dark-text-primary">Vitals</Typography>
+            <Typography
+              variant="h6"
+              className="text-light-text-primary dark:text-dark-text-primary"
+            >
+              Vitals
+            </Typography>
             {!isEditingVitals && (
-              <IconButton variant="text" onClick={() => setIsEditingVitals(true)}>
+              <IconButton
+                variant="text"
+                onClick={() => setIsEditingVitals(true)}
+              >
                 <PencilIcon className="h-5 w-5" />
               </IconButton>
             )}
@@ -417,7 +448,10 @@ const PatientProfilePage = () => {
                   name="age"
                   value={vitalsData.age}
                   onChange={(e) =>
-                    setVitalsData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                    setVitalsData((prev) => ({
+                      ...prev,
+                      [e.target.name]: e.target.value,
+                    }))
                   }
                 />
                 <Input
@@ -425,7 +459,10 @@ const PatientProfilePage = () => {
                   name="height"
                   value={vitalsData.height}
                   onChange={(e) =>
-                    setVitalsData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                    setVitalsData((prev) => ({
+                      ...prev,
+                      [e.target.name]: e.target.value,
+                    }))
                   }
                 />
                 <Input
@@ -433,7 +470,10 @@ const PatientProfilePage = () => {
                   name="weight"
                   value={vitalsData.weight}
                   onChange={(e) =>
-                    setVitalsData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                    setVitalsData((prev) => ({
+                      ...prev,
+                      [e.target.name]: e.target.value,
+                    }))
                   }
                 />
                 <Input
@@ -441,13 +481,21 @@ const PatientProfilePage = () => {
                   name="bloodPressure"
                   value={vitalsData.bloodPressure}
                   onChange={(e) =>
-                    setVitalsData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                    setVitalsData((prev) => ({
+                      ...prev,
+                      [e.target.name]: e.target.value,
+                    }))
                   }
                 />
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button size="sm" variant="text" color="red" onClick={() => setIsEditingVitals(false)}>
+                <Button
+                  size="sm"
+                  variant="text"
+                  color="red"
+                  onClick={() => setIsEditingVitals(false)}
+                >
                   Cancel
                 </Button>
                 <Button size="sm" color="green" onClick={handleVitalsSave}>
@@ -457,10 +505,19 @@ const PatientProfilePage = () => {
             </div>
           ) : (
             <ul className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-light-text-primary dark:text-dark-text-primary">
-              <li><strong>Age:</strong> {patientData.age || "N/A"}</li>
-              <li><strong>Height:</strong> {patientData.height || "N/A"}</li>
-              <li><strong>Weight:</strong> {patientData.weight || "N/A"}</li>
-              <li><strong>Blood Pressure:</strong> {patientData.bloodPressure || "N/A"}</li>
+              <li>
+                <strong>Age:</strong> {patientData.age || "N/A"}
+              </li>
+              <li>
+                <strong>Height:</strong> {patientData.height || "N/A"}
+              </li>
+              <li>
+                <strong>Weight:</strong> {patientData.weight || "N/A"}
+              </li>
+              <li>
+                <strong>Blood Pressure:</strong>{" "}
+                {patientData.bloodPressure || "N/A"}
+              </li>
             </ul>
           )}
         </CardBody>
@@ -468,257 +525,365 @@ const PatientProfilePage = () => {
 
       {/* Add Prescription */}
       <Card className="w-full bg-light-card dark:bg-dark-card text-light-text-primary dark:text-dark-text-primary">
-          <CardHeader floated={false} shadow={false} className="rounded-none bg-transparent">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <Typography variant="h6" className=" text-light-text-primary dark:text-dark-text-primary">Add New Prescription</Typography>
-              {!showMedicationForm && <Button size="sm" onClick={() => setShowMedicationForm(true)}>Create</Button>}
-            </div>
-          </CardHeader>
-
-          {showMedicationForm && (
-            <CardBody>
-        <form onSubmit={handleMedicationSubmit} className="flex flex-col gap-6">
-          {/* Search & Suggestions */}
-          <div className="relative">
-            <Input
-              crossOrigin={""}
-              label="Search by Disease, Brand or Generic Name..."
-              autoComplete="off"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              color="blue-gray"
-              className="dark:text-white"
-              labelProps={{ className: "dark:!text-dark-text-secondary font-medium" }}
-            />
-            {/* --- সাজেশন লিস্ট --- */}
-            {(searchTerm.length >= 3 &&
-              (isFetchingSuggestions || suggestions.length > 0 || hasMoreSuggestions)) && (
-              <Card className="absolute z-20 w-full mt-1 max-h-60 overflow-y-auto bg-light-card dark:bg-dark-card border border-gray-300 dark:border-gray-700">
-                <List>
-                  {isFetchingSuggestions ? (
-                    <ListItem disabled className="text-light-text-secondary dark:text-dark-text-secondary">Loading...</ListItem>
-                  ) : (
-                    suggestions.map((med) => (
-                      <ListItem
-                        key={med._id}
-                        onClick={() => handleSuggestionClick(med)}
-                        className="flex justify-between text-light-text-primary dark:text-dark-text-primary hover:bg-gray-200 dark:hover:bg-gray-700"
-                      >
-                        <div>
-                          <Typography variant="small" color="inherit" className="font-bold">
-                            {med.brandName} - {med.strength}
-                          </Typography>
-                          <Typography variant="small" color="inherit" className="opacity-80">
-                            {med.genericName}
-                          </Typography>
-                        </div>
-                        <div className="flex items-center gap-2 opacity-80 text-[13px]">
-                          ⭐ {med.rating?.toFixed(1) || 0}
-                          <IconButton
-                            variant="text"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewDetails(med);
-                            }}
-                          >
-                            <EyeIcon className="h-5 w-5 text-light-text-secondary dark:text-dark-text-secondary" />
-                          </IconButton>
-                        </div>
-                      </ListItem>
-                    ))
-                  )}
-                  {hasMoreSuggestions && (
-                    <ListItem
-                      onClick={handleLoadMore}
-                      disabled={isFetchingSuggestions}
-                      className="justify-center text-primary font-bold cursor-pointer"
-                    >
-                      {isFetchingSuggestions ? <Spinner className="h-4 w-4" /> : "Load More..."}
-                    </ListItem>
-                  )}
-                </List>
-              </Card>
+        <CardHeader
+          floated={false}
+          shadow={false}
+          className="rounded-none bg-transparent"
+        >
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <Typography
+              variant="h6"
+              className=" text-light-text-primary dark:text-dark-text-primary"
+            >
+              Add New Prescription
+            </Typography>
+            {!showMedicationForm && (
+              <Button size="sm" onClick={() => setShowMedicationForm(true)}>
+                Create
+              </Button>
             )}
           </div>
+        </CardHeader>
 
-          {/* --- মেডিসিন ফিল্ড --- */}
-          {medications.map((med, index) => (
-            <div
-              key={index}
-              className="p-4 border rounded-lg border-gray-300 dark:border-gray-700 bg-light-bg dark:bg-dark-bg"
+        {showMedicationForm && (
+          <CardBody>
+            <form
+              onSubmit={handleMedicationSubmit}
+              className="flex flex-col gap-6"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Search & Suggestions */}
+              <div className="relative">
                 <Input
-                  crossOrigin={""} name="medicationName" value={med.medicationName}
-                  onChange={(e) => handleMedicationChange(index, e)}
-                  label="Medication Name" required color="blue-gray"
+                  crossOrigin={""}
+                  label="Search by Disease, Brand or Generic Name..."
+                  autoComplete="off"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  color="blue-gray"
                   className="dark:text-white"
-                  labelProps={{ className: "dark:!text-dark-text-secondary font-medium" }}
+                  labelProps={{
+                    className: "dark:!text-dark-text-secondary font-medium",
+                  }}
                 />
-                <Input
-                  crossOrigin={""} name="dosage" value={med.dosage}
-                  onChange={(e) => handleMedicationChange(index, e)}
-                  label="Dosage (e.g., 500mg)" color="blue-gray"
-                  className="dark:text-white"
-                  labelProps={{ className: "dark:!text-dark-text-secondary font-medium" }}
-                />
-                <Input
-                  crossOrigin={""} name="price" value={med.price}
-                  onChange={(e) => handleMedicationChange(index, e)}
-                  label="Price" type="number" color="blue-gray"
-                  className="dark:text-white"
-                  labelProps={{ className: "dark:!text-dark-text-secondary font-medium" }}
-                />
-                <Select
-                  label="Frequency" value={med.frequency}
-                  onChange={(value) => handleMedicationChange(index, value, "frequency")}
-                  color="blue-gray" className="dark:text-white"
-                  labelProps={{ className: "dark:!text-dark-text-secondary font-medium" }}
-                  menuProps={{ className: "bg-light-card dark:bg-dark-card ..." }}
-                >
-                  <Option value="দিনে ১ বার">দিনে ১ বার</Option>
-                  <Option value="দিনে ২ বার">দিনে ২ বার</Option>
-                  <Option value="দিনে ৩ বার">দিনে ৩ বার</Option>
-                  <Option value="১+১+১">১+১+১</Option>
-                  <Option value="১+০+১">১+০+১</Option>
-                  <Option value="১+০+০">১+০+০</Option>
-                  <Option value="০+০+১">০+০+১</Option>
-                </Select>
-                <Select
-                  label="Instruction" value={med.instruction}
-                  onChange={(value) => handleMedicationChange(index, value, "instruction")}
-                  color="blue-gray" className="dark:text-white"
-                  labelProps={{ className: "dark:!text-dark-text-secondary font-medium" }}
-                  menuProps={{ className: "bg-light-card dark:bg-dark-card ..." }}
-                >
-                  <Option value="খাবারের পরে">খাবারের পরে</Option>
-                  <Option value="খাবারের আগে">খাবারের আগে</Option>
-                  <Option value="খালি পেটে">খালি পেটে</Option>
-                  <Option value="প্রয়োজনে">প্রয়োজনে</Option>
-                </Select>
+                {/* --- সাজেশন লিস্ট --- */}
+                {searchTerm.length >= 3 &&
+                  (isFetchingSuggestions ||
+                    suggestions.length > 0 ||
+                    hasMoreSuggestions) && (
+                    <Card className="absolute z-20 w-full mt-1 max-h-60 overflow-y-auto bg-light-card dark:bg-dark-card border border-gray-300 dark:border-gray-700">
+                      <List>
+                        {isFetchingSuggestions ? (
+                          <ListItem
+                            disabled
+                            className="text-light-text-secondary dark:text-dark-text-secondary"
+                          >
+                            Loading...
+                          </ListItem>
+                        ) : (
+                          suggestions.map((med) => (
+                            <ListItem
+                              key={med._id}
+                              onClick={() => handleSuggestionClick(med)}
+                              className="flex justify-between text-light-text-primary dark:text-dark-text-primary hover:bg-gray-200 dark:hover:bg-gray-700"
+                            >
+                              <div>
+                                <Typography
+                                  variant="small"
+                                  color="inherit"
+                                  className="font-bold"
+                                >
+                                  {med.brandName} - {med.strength}
+                                </Typography>
+                                <Typography
+                                  variant="small"
+                                  color="inherit"
+                                  className="opacity-80"
+                                >
+                                  {med.genericName}
+                                </Typography>
+                              </div>
+                              <div className="flex items-center gap-2 opacity-80 text-[13px]">
+                                ⭐ {med.rating?.toFixed(1) || 0}
+                                <IconButton
+                                  variant="text"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewDetails(med);
+                                  }}
+                                >
+                                  <EyeIcon className="h-5 w-5 text-light-text-secondary dark:text-dark-text-secondary" />
+                                </IconButton>
+                              </div>
+                            </ListItem>
+                          ))
+                        )}
+                        {hasMoreSuggestions && (
+                          <ListItem
+                            onClick={handleLoadMore}
+                            disabled={isFetchingSuggestions}
+                            className="justify-center text-primary font-bold cursor-pointer"
+                          >
+                            {isFetchingSuggestions ? (
+                              <Spinner className="h-4 w-4" />
+                            ) : (
+                              "Load More..."
+                            )}
+                          </ListItem>
+                        )}
+                      </List>
+                    </Card>
+                  )}
+              </div>
 
-                {/* ===== FIX: Duration ডিজাইন ঠিক করা হয়েছে ===== */}
+              {/* --- মেডিসিন ফিল্ড --- */}
+              {medications.map((med, index) => (
+                <div
+                  key={index}
+                  className="p-4 border rounded-lg border-gray-300 dark:border-gray-700 bg-light-bg dark:bg-dark-bg"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      crossOrigin={""}
+                      name="medicationName"
+                      value={med.medicationName}
+                      onChange={(e) => handleMedicationChange(index, e)}
+                      label="Medication Name"
+                      required
+                      color="blue-gray"
+                      className="dark:text-white"
+                      labelProps={{
+                        className: "dark:!text-dark-text-secondary font-medium",
+                      }}
+                    />
+                    <Input
+                      crossOrigin={""}
+                      name="dosage"
+                      value={med.dosage}
+                      onChange={(e) => handleMedicationChange(index, e)}
+                      label="Dosage (e.g., 500mg)"
+                      color="blue-gray"
+                      className="dark:text-white"
+                      labelProps={{
+                        className: "dark:!text-dark-text-secondary font-medium",
+                      }}
+                    />
+                    <Input
+                      crossOrigin={""}
+                      name="price"
+                      value={med.price}
+                      onChange={(e) => handleMedicationChange(index, e)}
+                      label="Price"
+                      type="number"
+                      color="blue-gray"
+                      className="dark:text-white"
+                      labelProps={{
+                        className: "dark:!text-dark-text-secondary font-medium",
+                      }}
+                    />
+                    <Select
+                      label="Frequency"
+                      value={med.frequency}
+                      onChange={(value) =>
+                        handleMedicationChange(index, value, "frequency")
+                      }
+                      color="blue-gray"
+                      className="dark:text-white"
+                      labelProps={{
+                        className: "dark:!text-dark-text-secondary font-medium",
+                      }}
+                      menuProps={{
+                        className: "bg-light-card dark:bg-dark-card ...",
+                      }}
+                    >
+                      <Option value="দিনে ১ বার">দিনে ১ বার</Option>
+                      <Option value="দিনে ২ বার">দিনে ২ বার</Option>
+                      <Option value="দিনে ৩ বার">দিনে ৩ বার</Option>
+                      <Option value="১+১+১">১+১+১</Option>
+                      <Option value="১+০+১">১+০+১</Option>
+                      <Option value="১+০+০">১+০+০</Option>
+                      <Option value="০+০+১">০+০+১</Option>
+                    </Select>
+                    <Select
+                      label="Instruction"
+                      value={med.instruction}
+                      onChange={(value) =>
+                        handleMedicationChange(index, value, "instruction")
+                      }
+                      color="blue-gray"
+                      className="dark:text-white"
+                      labelProps={{
+                        className: "dark:!text-dark-text-secondary font-medium",
+                      }}
+                      menuProps={{
+                        className: "bg-light-card dark:bg-dark-card ...",
+                      }}
+                    >
+                      <Option value="খাবারের পরে">খাবারের পরে</Option>
+                      <Option value="খাবারের আগে">খাবারের আগে</Option>
+                      <Option value="খালি পেটে">খালি পেটে</Option>
+                      <Option value="প্রয়োজনে">প্রয়োজনে</Option>
+                    </Select>
+
+                    {/* ===== FIX: Duration ডিজাইন ঠিক করা হয়েছে ===== */}
+                    <div className="relative h-10 w-full">
+                      <div className="flex items-center h-full">
+                        <Input
+                          crossOrigin={""}
+                          type="number"
+                          min="1"
+                          label="Duration"
+                          value={med.duration?.value || ""}
+                          onChange={(e) =>
+                            handleMedicationChange(
+                              index,
+                              {
+                                value: e.target.value,
+                                unit: med.duration?.unit || "day",
+                              },
+                              "duration"
+                            )
+                          }
+                          color="blue-gray"
+                          className="rounded-r-none border-r-0 dark:text-white"
+                          labelProps={{
+                            className:
+                              "dark:!text-dark-text-secondary font-medium",
+                          }}
+                          containerProps={{ className: "min-w-[70%]" }}
+                        />
+                        <Select
+                          value={med.duration?.unit || "day"}
+                          onChange={(value) =>
+                            handleMedicationChange(
+                              index,
+                              { value: med.duration?.value || "", unit: value },
+                              "duration"
+                            )
+                          }
+                          className="rounded-l-none border-l-0 dark:text-white"
+                          color="blue-gray"
+                          // labelProps={{ className: "hidden" }} // ইনপুটের লেবেলটিই যথেষ্ট
+                          containerProps={{ className: "min-w-[30%]" }}
+                          menuProps={{
+                            className: "bg-light-card dark:bg-dark-card ...",
+                          }}
+                        >
+                          <Option value="day">দিন</Option>
+                          <Option value="week">সপ্তাহ</Option>
+                          <Option value="month">মাস</Option>
+                          <Option value="continue">চলবে</Option>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {medications.length > 1 && (
+                    <div className="flex justify-end mt-2">
+                      <Button
+                        size="sm"
+                        color="red"
+                        variant="text"
+                        onClick={() => removeMedicationField(index)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              <Button
+                size="sm"
+                variant="outlined"
+                onClick={addMedicationField}
+                className="rounded-full shadow-sm border-gray-400 text-gray-800 dark:border-gray-300 dark:text-gray-200 dark:hover:bg-gray-700 self-start ..."
+              >
+                + Add More Medicine
+              </Button>
+
+              <Textarea
+                label="General Notes..."
+                value={generalNotes}
+                onChange={(e) => setGeneralNotes(e.target.value)}
+                color="blue-gray"
+                className="dark:text-white"
+                labelProps={{
+                  className: "dark:!text-dark-text-secondary font-medium",
+                }}
+              />
+              <Textarea
+                label="Suggested Reports..."
+                value={suggestedReports}
+                onChange={(e) => setSuggestedReports(e.target.value)}
+                color="blue-gray"
+                className="dark:text-white"
+                labelProps={{
+                  className: "dark:!text-dark-text-secondary font-medium",
+                }}
+              />
+
+              {/* ===== FIX: Follow-Up ডিজাইন ঠিক করা হয়েছে ===== */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="relative h-10 w-full">
                   <div className="flex items-center h-full">
                     <Input
                       crossOrigin={""}
                       type="number"
                       min="1"
-                      label="Duration"
-                      value={med.duration?.value || ""}
+                      label="Follow-Up After"
+                      value={followUp.value}
                       onChange={(e) =>
-                        handleMedicationChange(
-                          index,
-                          { value: e.target.value, unit: med.duration?.unit || "day" },
-                          "duration"
-                        )
+                        setFollowUp({
+                          value: e.target.value,
+                          unit: followUp.unit,
+                        })
                       }
                       color="blue-gray"
                       className="rounded-r-none border-r-0 dark:text-white"
-                      labelProps={{ className: "dark:!text-dark-text-secondary font-medium" }}
+                      labelProps={{
+                        className: "dark:!text-dark-text-secondary font-medium",
+                      }}
                       containerProps={{ className: "min-w-[70%]" }}
                     />
                     <Select
-                      value={med.duration?.unit || "day"}
+                      value={followUp.unit}
                       onChange={(value) =>
-                        handleMedicationChange(
-                          index,
-                          { value: med.duration?.value || "", unit: value },
-                          "duration"
-                        )
+                        setFollowUp({ value: followUp.value, unit: value })
                       }
                       className="rounded-l-none border-l-0 dark:text-white"
                       color="blue-gray"
-                      // labelProps={{ className: "hidden" }} // ইনপুটের লেবেলটিই যথেষ্ট
+                      // labelProps={{ className: "hidden" }}
                       containerProps={{ className: "min-w-[30%]" }}
-                      menuProps={{ className: "bg-light-card dark:bg-dark-card ..." }}
+                      menuProps={{
+                        className: "bg-light-card dark:bg-dark-card ...",
+                      }}
                     >
                       <Option value="day">দিন</Option>
                       <Option value="week">সপ্তাহ</Option>
                       <Option value="month">মাস</Option>
-                      <Option value="continue">চলবে</Option>
                     </Select>
                   </div>
                 </div>
+                <div></div> {/* Placeholder for the second column */}
               </div>
 
-              {medications.length > 1 && (
-                <div className="flex justify-end mt-2">
-                  <Button size="sm" color="red" variant="text" onClick={() => removeMedicationField(index)}>
-                    Remove
-                  </Button>
-                </div>
-              )}
-            </div>
-          ))}
-
-          <Button size="sm" variant="outlined" onClick={addMedicationField} className="rounded-full shadow-sm border-gray-400 text-gray-800 dark:border-gray-300 dark:text-gray-200 dark:hover:bg-gray-700 self-start ...">
-            + Add More Medicine
-          </Button>
-
-          <Textarea
-            label="General Notes..." value={generalNotes}
-            onChange={(e) => setGeneralNotes(e.target.value)}
-            color="blue-gray" className="dark:text-white"
-            labelProps={{ className: "dark:!text-dark-text-secondary font-medium" }}
-          />
-          <Textarea
-            label="Suggested Reports..." value={suggestedReports}
-            onChange={(e) => setSuggestedReports(e.target.value)}
-            color="blue-gray" className="dark:text-white"
-            labelProps={{ className: "dark:!text-dark-text-secondary font-medium" }}
-          />
-          
-          {/* ===== FIX: Follow-Up ডিজাইন ঠিক করা হয়েছে ===== */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="relative h-10 w-full">
-              <div className="flex items-center h-full">
-                <Input
-                  crossOrigin={""}
-                  type="number"
-                  min="1"
-                  label="Follow-Up After"
-                  value={followUp.value}
-                  onChange={(e) =>
-                    setFollowUp({ value: e.target.value, unit: followUp.unit })
-                  }
-                  color="blue-gray"
-                  className="rounded-r-none border-r-0 dark:text-white"
-                  labelProps={{ className: "dark:!text-dark-text-secondary font-medium" }}
-                  containerProps={{ className: "min-w-[70%]" }}
-                />
-                <Select
-                  value={followUp.unit}
-                  onChange={(value) =>
-                    setFollowUp({ value: followUp.value, unit: value })
-                  }
-                  className="rounded-l-none border-l-0 dark:text-white"
-                  color="blue-gray"
-                  // labelProps={{ className: "hidden" }}
-                  containerProps={{ className: "min-w-[30%]" }}
-                  menuProps={{ className: "bg-light-card dark:bg-dark-card ..." }}
+              <div className="flex justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="text"
+                  color="red"
+                  onClick={() => setShowMedicationForm(false)}
                 >
-                  <Option value="day">দিন</Option>
-                  <Option value="week">সপ্তাহ</Option>
-                  <Option value="month">মাস</Option>
-                </Select>
+                  Cancel
+                </Button>
+                <Button size="sm" color="green" type="submit">
+                  Save Prescription
+                </Button>
               </div>
-            </div>
-            <div></div> {/* Placeholder for the second column */}
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button size="sm" variant="text" color="red" onClick={() => setShowMedicationForm(false)}>
-              Cancel
-            </Button>
-            <Button size="sm" color="green" type="submit">
-              Save Prescription
-            </Button>
-          </div>
-        </form>
-            </CardBody>
-          )}
+            </form>
+          </CardBody>
+        )}
       </Card>
 
       {/* Prescription History */}
@@ -726,6 +891,7 @@ const PatientProfilePage = () => {
         prescriptions={prescriptions}
         title="Prescription History"
         onDownloadPdf={handleDownloadPdf}
+        onDeletePrescription={handleDeletePrescription}
         onViewMedicineDetails={handleViewDetails}
         emptyText="No prescriptions found."
       />
