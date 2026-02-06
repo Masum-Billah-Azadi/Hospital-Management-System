@@ -1,27 +1,28 @@
 // src/components/patient-dashboard/PatientNavbar.js
 "use client";
-import {
-  Navbar,
-  Typography,
-  IconButton,
-  Menu,
-  MenuHandler,
-  MenuList,
-  MenuItem,
-  Avatar,
-} from "@material-tailwind/react";
-import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import {
   Bars3Icon,
-  PowerIcon,
-  HomeIcon,
-  UserGroupIcon,
   CalendarDaysIcon,
   HeartIcon,
+  HomeIcon,
+  PowerIcon,
+  TruckIcon,
   UserCircleIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/solid";
+import {
+  Avatar,
+  IconButton,
+  Menu,
+  MenuHandler,
+  MenuItem,
+  MenuList,
+  Navbar,
+  Typography,
+} from "@material-tailwind/react";
+import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export function PatientNavbar() {
   const { data: session } = useSession();
@@ -51,7 +52,11 @@ export function PatientNavbar() {
                 src={session?.user?.image || "/default-avatar.png"}
                 alt={session?.user?.name || "Patient"}
               />
-              <Typography variant="small" color="inherit" className="font-medium">
+              <Typography
+                variant="small"
+                color="inherit"
+                className="font-medium"
+              >
                 {session?.user?.name}
               </Typography>
             </MenuItem>
@@ -101,6 +106,18 @@ export function PatientNavbar() {
               className="flex items-center gap-2"
             >
               <HomeIcon className="h-4 w-4" /> Northern Pharmacy
+            </MenuItem>
+
+            <MenuItem
+              onClick={() =>
+                window.open(
+                  "https://northern-ambulance.infinityfreeapp.com/",
+                  "_blank",
+                )
+              }
+              className="flex items-center gap-2"
+            >
+              <TruckIcon className="h-4 w-4" /> Northern Ambulance
             </MenuItem>
 
             <hr className="my-2 border-gray-300 dark:border-blue-gray-50" />

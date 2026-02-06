@@ -4,11 +4,11 @@ import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import {
   Bars3Icon,
   CalendarDaysIcon,
-  HeartIcon,
   HomeIcon,
   PowerIcon,
+  TruckIcon,
   UserCircleIcon,
-  UserGroupIcon
+  UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import {
   Avatar,
@@ -30,7 +30,12 @@ export function DoctorNavbar() {
   return (
     <Navbar className="w-full p-2 lg:hidden bg-light-card dark:bg-dark-card border-none text-light-text-primary dark:text-dark-text-primary">
       <div className="relative mx-auto flex items-center justify-between">
-        <Typography onClick={() => router.push('/dashboard')} variant="h6" color="inherit" className="cursor-pointer">
+        <Typography
+          onClick={() => router.push("/dashboard")}
+          variant="h6"
+          color="inherit"
+          className="cursor-pointer"
+        >
           DocPortal
         </Typography>
         <Menu>
@@ -42,35 +47,75 @@ export function DoctorNavbar() {
           <MenuList className="bg-light-card dark:bg-dark-card border-gray-300 dark:border-blue-gray-100/20 text-light-text-primary dark:text-dark-text-primary">
             {/* ... প্রোফাইল MenuItem অপরিবর্তিত ... */}
             <MenuItem className="flex items-center gap-2">
-              <Avatar size="sm" src={session?.user?.image || "/default-avatar.png"} alt={session?.user?.name || "Doctor"}/>
-              <Typography variant="small" color="inherit" className="font-medium"> Dr. {session?.user?.name || "Doctor"} </Typography>
+              <Avatar
+                size="sm"
+                src={session?.user?.image || "/default-avatar.png"}
+                alt={session?.user?.name || "Doctor"}
+              />
+              <Typography
+                variant="small"
+                color="inherit"
+                className="font-medium"
+              >
+                {" "}
+                Dr. {session?.user?.name || "Doctor"}{" "}
+              </Typography>
             </MenuItem>
             <hr className="my-2 border-gray-300 dark:border-blue-gray-50" />
-            
+
             {/* পরিবর্তন: as={Link} এর পরিবর্তে onClick ব্যবহার করা হয়েছে */}
-            <MenuItem onClick={() => router.push('/dashboard')} className="flex items-center gap-2">
-              <HomeIcon className="h-4 w-4" /> Dashboard
-            </MenuItem>
-            <MenuItem onClick={() => router.push('/dashboard/appointments')} className="flex items-center gap-2">
-              <CalendarDaysIcon className="h-4 w-4" /> Appointments
-            </MenuItem>
-            <MenuItem onClick={() => router.push('/dashboard/patients')} className="flex items-center gap-2">
-              <UserGroupIcon className="h-4 w-4" /> Patients
-            </MenuItem>
-             <MenuItem onClick={() => router.push('/dashboard/profile')} className="flex items-center gap-2">
-              <UserCircleIcon className="h-4 w-4" /> Profile
-            </MenuItem>
-             <MenuItem 
-              onClick={() => window.open('http://anirban.lovestoblog.com/', '_blank')} 
+            <MenuItem
+              onClick={() => router.push("/dashboard")}
               className="flex items-center gap-2"
             >
-                <HeartIcon className="h-4 w-4" /> Blood Bank
+              <HomeIcon className="h-4 w-4" /> Dashboard
             </MenuItem>
-            
+            <MenuItem
+              onClick={() => router.push("/dashboard/appointments")}
+              className="flex items-center gap-2"
+            >
+              <CalendarDaysIcon className="h-4 w-4" /> Appointments
+            </MenuItem>
+            <MenuItem
+              onClick={() => router.push("/dashboard/patients")}
+              className="flex items-center gap-2"
+            >
+              <UserGroupIcon className="h-4 w-4" /> Patients
+            </MenuItem>
+            <MenuItem
+              onClick={() => router.push("/dashboard/profile")}
+              className="flex items-center gap-2"
+            >
+              <UserCircleIcon className="h-4 w-4" /> Profile
+            </MenuItem>
+            <MenuItem
+              onClick={() =>
+                window.open(
+                  "https://northern-ambulance.infinityfreeapp.com/",
+                  "_blank",
+                )
+              }
+              className="flex items-center gap-2"
+            >
+              <TruckIcon className="h-4 w-4" /> Ambulance
+            </MenuItem>
+
             {/* ... বাকি MenuItem গুলো অপরিবর্তিত ... */}
             <hr className="my-2 border-gray-300 dark:border-blue-gray-50" />
-            <MenuItem><div className="flex items-center gap-2"><ThemeSwitcher /><Typography variant="small" color="inherit">Change Theme</Typography></div></MenuItem>
-            <MenuItem onClick={() => signOut({ callbackUrl: '/' })} className="flex items-center gap-2 text-red-500"><PowerIcon className="h-4 w-4" /> Sign Out</MenuItem>
+            <MenuItem>
+              <div className="flex items-center gap-2">
+                <ThemeSwitcher />
+                <Typography variant="small" color="inherit">
+                  Change Theme
+                </Typography>
+              </div>
+            </MenuItem>
+            <MenuItem
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="flex items-center gap-2 text-red-500"
+            >
+              <PowerIcon className="h-4 w-4" /> Sign Out
+            </MenuItem>
           </MenuList>
         </Menu>
       </div>
