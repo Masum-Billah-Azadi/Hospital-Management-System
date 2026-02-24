@@ -342,7 +342,7 @@ const ProfilePage = () => {
                 ))
               ) : (
                 <Typography variant="small" color="red">
-                  No time slots added. Patients won't be able to book you!
+                  No time slots added. Patients won&apos;t be able to book you!
                 </Typography>
               )}
             </div>
