@@ -29,6 +29,7 @@ export async function POST(req) {
         patient: payment.patientId, // Init রাউটে সেশন থেকে পাওয়া আইডি
         doctor: payment.doctorId,
         appointmentDate: payment.appointmentDate,
+        timeSlot: payment.timeSlot,
         reason: payment.reason,
         status: "pending", // ডিফল্ট স্ট্যাটাস
         paymentStatus: "paid", // পেমেন্ট হয়েছে তাই মার্ক করে রাখলাম

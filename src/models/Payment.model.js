@@ -10,6 +10,7 @@ const PaymentSchema = new mongoose.Schema({
   patientId: { type: String, required: true }, // এটি User ID (ObjectId)
   doctorId: { type: String, required: true },
   appointmentDate: { type: String, required: true },
+  timeSlot: { type: String, required: true },
   reason: { type: String, required: true },
 
   status: {

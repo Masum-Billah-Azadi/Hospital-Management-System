@@ -23,6 +23,7 @@ export async function POST(req) {
       mobile,
       appointmentId,
       appointmentDate,
+      timeSlot,
       reason,
     } = await req.json();
 
@@ -44,6 +45,7 @@ export async function POST(req) {
       patientId: session.user.id, // ✅ পুরোনো কোডের সেই ম্যাজিক লাইন!
       doctorId: appointmentId,
       appointmentDate: appointmentDate,
+      timeSlot: timeSlot,
       reason: reason,
     });
 

@@ -1,3 +1,4 @@
+// src/app/dashboard/profile/page.js
 "use client";
 
 import {
@@ -31,8 +32,8 @@ const specialties = [
 ];
 
 const ProfilePage = () => {
+  // --- আপনার পুরোনো সব state এবং logic অপরিবর্তিত রাখা হয়েছে ---
   const { data: session, update } = useSession();
-  // স্টেটে availableSlots এবং isAvailable যোগ করা হয়েছে
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -42,9 +43,7 @@ const ProfilePage = () => {
     address: "",
     bio: "",
     isAvailable: true,
-    availableSlots: [],
   });
-  const [newSlotTime, setNewSlotTime] = useState(""); // নতুন স্লট ইনপুটের জন্য স্টেট
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -67,7 +66,6 @@ const ProfilePage = () => {
             bio: data.bio || "",
             isAvailable:
               data.isAvailable !== undefined ? data.isAvailable : true,
-            availableSlots: data.availableSlots || [],
           });
           setLoading(false);
         });
@@ -85,40 +83,6 @@ const ProfilePage = () => {
       setSelectedFile(file);
       setImagePreview(URL.createObjectURL(file));
     }
-  };
-
-  // 24-hour টাইমকে 12-hour AM/PM ফরম্যাটে রূপান্তর করার ফাংশন
-  const formatTime = (time24) => {
-    if (!time24) return "";
-    const [hourStr, minute] = time24.split(":");
-    let hour = parseInt(hourStr, 10);
-    const ampm = hour >= 12 ? "PM" : "AM";
-    hour = hour % 12;
-    hour = hour ? hour : 12;
-    const hourFormatted = hour < 10 ? "0" + hour : hour;
-    return `${hourFormatted}:${minute} ${ampm}`;
-  };
-
-  const handleAddSlot = () => {
-    if (newSlotTime) {
-      const formattedTime = formatTime(newSlotTime);
-      if (!formData.availableSlots.includes(formattedTime)) {
-        setFormData((prev) => ({
-          ...prev,
-          availableSlots: [...prev.availableSlots, formattedTime],
-        }));
-      }
-      setNewSlotTime(""); // ইনপুট ক্লিয়ার করা
-    }
-  };
-
-  const handleRemoveSlot = (slotToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      availableSlots: prev.availableSlots.filter(
-        (slot) => slot !== slotToRemove,
-      ),
-    }));
   };
 
   const handleSubmit = async (e) => {
@@ -181,7 +145,7 @@ const ProfilePage = () => {
             Edit Your Profile
           </Typography>
           <Typography variant="small" color="inherit" className="opacity-70">
-            Keep your professional information and schedules up to date.
+            Keep your professional information up to date.
           </Typography>
         </div>
       </CardHeader>
@@ -224,13 +188,13 @@ const ProfilePage = () => {
                 Profile Picture
               </Typography>
               <Avatar
-                src={imagePreview || formData.image || `/default-avatar.png`}
+                src={imagePreview || formData.image || `...`}
                 alt="Profile Preview"
                 size="xxl"
               />
               <label
                 htmlFor="profile-picture-upload"
-                className="cursor-pointer inline-block text-sm font-bold py-2 px-4 rounded-lg border text-light-text-primary border-blue-gray-500 dark:text-dark-text-primary hover:bg-blue-gray-50 transition-colors"
+                className="cursor-pointer inline-block text-sm font-bold py-2 px-4 rounded-lg border text-light-text-primary border-blue-gray-500 dark:text-dark-text-primary  hover:bg-blue-gray-30 transition-colors"
               >
                 Change Picture
               </label>
@@ -245,6 +209,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
+          {/* Fields below the grid */}
           <Select
             label="Select Designation"
             name="designation"
@@ -266,7 +231,7 @@ const ProfilePage = () => {
           </Select>
 
           <Textarea
-            label="Address / Chamber Location"
+            label="Address"
             name="address"
             value={formData.address}
             onChange={handleInputChange}
@@ -281,74 +246,17 @@ const ProfilePage = () => {
             onChange={handleInputChange}
             color="blue-gray"
             className="dark:text-white"
-            rows={4}
+            rows={5}
           />
 
-          {/* --- Time Slots Manager Section --- */}
-          <div className="flex flex-col gap-4 p-4 border border-gray-300 dark:border-gray-700 rounded-lg">
-            <div>
-              <Typography
-                variant="h6"
-                color="blue-gray"
-                className="dark:text-white"
-              >
-                Manage Daily Time Slots
-              </Typography>
-              <Typography
-                variant="small"
-                color="gray"
-                className="dark:text-gray-400"
-              >
-                Add the exact times you want patients to book appointments.
-              </Typography>
-            </div>
-
-            <div className="flex gap-2 items-center max-w-sm">
-              <Input
-                crossOrigin={""}
-                type="time"
-                label="Select Time"
-                value={newSlotTime}
-                onChange={(e) => setNewSlotTime(e.target.value)}
-                color="blue-gray"
-                className="dark:text-white"
-              />
-              <Button
-                onClick={handleAddSlot}
-                color="blue"
-                disabled={!newSlotTime}
-                className="shrink-0"
-              >
-                Add Slot
-              </Button>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg min-h-[60px] items-center">
-              {formData.availableSlots.length > 0 ? (
-                formData.availableSlots.map((slot, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2 bg-blue-100 text-blue-900 px-3 py-1 rounded-full text-sm font-medium border border-blue-200 dark:bg-blue-900 dark:text-blue-100 dark:border-blue-800"
-                  >
-                    <span>{slot}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSlot(slot)}
-                      className="text-red-500 hover:text-red-700 ml-1 text-lg leading-none outline-none"
-                    >
-                      &times;
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <Typography variant="small" color="red">
-                  No time slots added. Patients won't be able to book you!
-                </Typography>
-              )}
-            </div>
-          </div>
-          {/* ---------------------------------- */}
-
+          {message && (
+            <Typography
+              color={message.startsWith("Error") ? "red" : "green"}
+              className="text-center"
+            >
+              {message}
+            </Typography>
+          )}
           {/* --- Availability Switch --- */}
           <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <Switch
@@ -376,26 +284,17 @@ const ProfilePage = () => {
                 color="gray"
                 className="font-normal dark:text-gray-400"
               >
-                Turn this off if you are on leave. It will hide the booking
-                button.
+                Turn this off if you are on leave or not accepting new patients.
               </Typography>
             </div>
           </div>
-
-          {message && (
-            <Typography
-              color={message.startsWith("Error") ? "red" : "green"}
-              className="text-center font-bold"
-            >
-              {message}
-            </Typography>
-          )}
+          {/* --------------------------- */}
 
           <Button type="submit" color="blue" fullWidth disabled={isSaving}>
             {isSaving ? (
               <Spinner className="h-4 w-4 mx-auto" />
             ) : (
-              "Save All Changes"
+              "Save Changes"
             )}
           </Button>
         </form>
