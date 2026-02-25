@@ -5,9 +5,11 @@ import {
   Bars3Icon,
   BeakerIcon,
   Cog6ToothIcon,
+  HomeIcon, // ✅ HomeIcon যুক্ত করা হয়েছে
   PowerIcon,
+  ReceiptRefundIcon,
   TruckIcon,
-  UserCircleIcon, // ১. নতুন আইকন ইম্পোর্ট
+  UserCircleIcon,
 } from "@heroicons/react/24/solid";
 import {
   Avatar,
@@ -20,7 +22,7 @@ import {
   Typography,
 } from "@material-tailwind/react";
 import { signOut, useSession } from "next-auth/react";
-import Link from "next/link"; // ২. লিংক ইম্পোর্ট
+import Link from "next/link";
 
 export function AdminNavbar() {
   const { data: session } = useSession();
@@ -54,7 +56,17 @@ export function AdminNavbar() {
 
             <hr className="my-2 border-gray-300 dark:border-blue-gray-50" />
 
-            {/* --- ৩. নতুন সংযোজন: এডিট প্রোফাইল বাটন --- */}
+            {/* ✅ নতুন সংযোজন: Dashboard লিংক */}
+            <Link href="/admin/dashboard" className="outline-none">
+              <MenuItem className="flex items-center gap-2">
+                <HomeIcon className="h-4 w-4" />
+                <Typography variant="small" className="font-medium">
+                  Dashboard
+                </Typography>
+              </MenuItem>
+            </Link>
+
+            {/* Profile Link */}
             <Link href="/admin/dashboard/profile" className="outline-none">
               <MenuItem className="flex items-center gap-2">
                 <UserCircleIcon className="h-4 w-4" />
@@ -63,7 +75,16 @@ export function AdminNavbar() {
                 </Typography>
               </MenuItem>
             </Link>
-            {/* ------------------------------------------ */}
+
+            {/* Refunds বাটন */}
+            <Link href="/admin/dashboard/refunds" className="outline-none">
+              <MenuItem className="flex items-center gap-2">
+                <ReceiptRefundIcon className="h-4 w-4" />
+                <Typography variant="small" className="font-medium">
+                  Refunds
+                </Typography>
+              </MenuItem>
+            </Link>
 
             {/* Blood Bank (old) */}
             <MenuItem
@@ -81,7 +102,7 @@ export function AdminNavbar() {
               </Typography>
             </MenuItem>
 
-            {/* অন্যান্য মেনু আইটেমগুলো অপরিবর্তিত থাকবে... */}
+            {/* অন্যান্য মেনু আইটেমগুলো */}
             <MenuItem
               onClick={() =>
                 window.open(
@@ -119,13 +140,13 @@ export function AdminNavbar() {
               </div>
             </MenuItem>
 
-            {/* Sign Out */}
+            {/* ✅ Sign Out (স্টাইল আপডেট করা হয়েছে: লাল ব্যাকগ্রাউন্ড, সাদা টেক্সট) */}
             <MenuItem
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 focus:bg-red-600 text-white hover:text-white focus:text-white mt-2 rounded-md transition-colors"
             >
-              <PowerIcon className="h-4 w-4 text-red-500" />
-              <Typography variant="small" className="font-medium text-red-500">
+              <PowerIcon className="h-4 w-4 text-white" />
+              <Typography variant="small" className="font-medium text-white">
                 Sign Out
               </Typography>
             </MenuItem>

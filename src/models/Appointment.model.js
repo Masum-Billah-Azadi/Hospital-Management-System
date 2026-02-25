@@ -24,6 +24,10 @@ const AppointmentSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please provide a reason for your visit"],
   },
+  isRefunded: {
+    type: Boolean,
+    default: false,
+  },
   status: {
     type: String,
     enum: ["pending", "accepted", "rejected"],

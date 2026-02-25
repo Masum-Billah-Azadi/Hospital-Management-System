@@ -395,13 +395,12 @@ const BookingPage = () => {
             )}
 
             <Textarea
-              label="Reason for Visit"
+              label="Reason for Visit (Briefly describe your problem...)"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               required
               color="blue-gray"
               className="dark:text-white"
-              placeholder="Briefly describe your problem..."
             />
 
             {error && (

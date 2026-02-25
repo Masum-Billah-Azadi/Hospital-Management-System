@@ -9,9 +9,19 @@ import {
   CardHeader,
   Chip,
   Spinner,
+  Tooltip,
   Typography,
 } from "@material-tailwind/react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
+
+const TABLE_HEAD = [
+  "Patient Info",
+  "Date & Time",
+  "Reason",
+  "Status",
+  "Actions",
+];
 
 const AppointmentsPage = () => {
   const [appointments, setAppointments] = useState([]);
@@ -36,16 +46,34 @@ const AppointmentsPage = () => {
     fetchAppointments();
   }, []);
 
-  // Modal এর বদলে সরাসরি Accept/Reject হবে
-  const handleUpdateStatus = async (appointmentId, status) => {
+  const handleAddPatientSilent = async (patientId) => {
+    try {
+      await fetch("/api/patients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patientId }),
+      });
+    } catch (err) {
+      console.error("Auto-add patient error:", err);
+    }
+  };
+
+  const handleUpdateStatus = async (
+    appointmentId,
+    status,
+    patientId = null,
+  ) => {
     try {
       const res = await fetch("/api/appointments/update-status", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        // ব্যাকএন্ড এখন নিজে থেকেই timeSlot কে scheduledTime বানিয়ে নেবে
         body: JSON.stringify({ appointmentId, status }),
       });
       if (!res.ok) throw new Error("Failed to update status");
+
+      if (status === "accepted" && patientId) {
+        await handleAddPatientSilent(patientId);
+      }
 
       if (status === "rejected") {
         setAppointments((prev) =>
@@ -58,23 +86,6 @@ const AppointmentsPage = () => {
           ),
         );
       }
-    } catch (err) {
-      alert(`Error: ${err.message}`);
-    }
-  };
-
-  const handleAddPatient = async (patientId) => {
-    try {
-      const res = await fetch("/api/patients", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patientId }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Failed to add patient.");
-      }
-      alert("Patient added to your list successfully!");
     } catch (err) {
       alert(`Error: ${err.message}`);
     }
@@ -106,9 +117,9 @@ const AppointmentsPage = () => {
       <CardHeader
         floated={false}
         shadow={false}
-        className="rounded-none bg-transparent"
+        className="rounded-none bg-transparent mb-2"
       >
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-4 pt-4 pb-2">
           <Typography
             variant="h5"
             className="text-light-text-primary dark:text-dark-text-primary"
@@ -117,129 +128,162 @@ const AppointmentsPage = () => {
           </Typography>
         </div>
       </CardHeader>
-      <CardBody className="p-0">
-        <div className="hidden md:flex items-center p-4 bg-gray-50 dark:bg-gray-800/50">
-          <Typography variant="small" className="font-bold flex-[2] opacity-70">
-            Patient Name
-          </Typography>
-          <Typography
-            variant="small"
-            className="font-bold flex-[1.5] opacity-70"
-          >
-            Date & Time
-          </Typography>
-          <Typography
-            variant="small"
-            className="font-bold flex-[2.5] opacity-70"
-          >
-            Reason
-          </Typography>
-          <Typography
-            variant="small"
-            className="font-bold flex-1 text-center opacity-70"
-          >
-            Status
-          </Typography>
-          <Typography
-            variant="small"
-            className="font-bold flex-[2] text-center opacity-70"
-          >
-            Actions
-          </Typography>
-        </div>
-        <div>
-          {appointments.length > 0 ? (
-            appointments.map((app) => (
-              <div
-                key={app._id}
-                className="flex flex-col md:flex-row items-start md:items-center p-4 border-b border-gray-200 dark:border-gray-700"
-              >
-                <div className="flex items-center gap-3 mb-2 md:mb-0 flex-[2]">
-                  <Avatar
-                    src={
-                      app.patient?.image ||
-                      `https://ui-avatars.com/api/?name=${app.patient?.name.replace(/\s/g, "+")}`
-                    }
-                    alt={app.patient?.name}
-                    size="sm"
-                  />
-                  <Typography color="inherit" className="font-semibold">
-                    {app.patient?.name}
-                  </Typography>
-                </div>
 
-                {/* ✅ ডেট এবং টাইম স্লট একসাথে দেখানো হচ্ছে */}
-                <div className="mb-2 md:mb-0 flex-[1.5] pr-4 flex flex-col">
+      {/* overflow-x-auto আছে, তবে min-w-max সরিয়ে দেওয়া হয়েছে যাতে স্ক্রলবার না আসে */}
+      <CardBody className="p-0 overflow-x-auto">
+        <table className="w-full table-auto text-left">
+          <thead>
+            <tr>
+              {TABLE_HEAD.map((head) => (
+                <th
+                  key={head}
+                  // প্যাডিং কমানো হয়েছে (px-2 sm:px-3)
+                  className="border-b border-blue-gray-100 dark:border-gray-700 bg-blue-gray-50 dark:bg-gray-800/50 py-2 px-2 sm:px-3"
+                >
                   <Typography
                     variant="small"
-                    color="inherit"
-                    className="font-medium"
+                    className="font-bold leading-none opacity-70 text-[11px] sm:text-xs"
                   >
-                    {new Date(app.appointmentDate).toLocaleDateString()}
+                    {head}
                   </Typography>
-                  <Typography
-                    variant="small"
-                    color="blue"
-                    className="font-bold mt-0.5"
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {appointments.length > 0 ? (
+              appointments.map((app, index) => {
+                const isLast = index === appointments.length - 1;
+                // প্যাডিং কমানো হয়েছে
+                const classes = isLast
+                  ? "py-2 px-2 sm:px-3"
+                  : "py-2 px-2 sm:px-3 border-b border-blue-gray-50 dark:border-gray-700";
+
+                return (
+                  <tr
+                    key={app._id}
+                    className="hover:bg-blue-gray-50/50 dark:hover:bg-gray-800/20 transition-colors"
                   >
-                    {app.timeSlot || app.scheduledTime || "Time Not Set"}
+                    <td className={classes}>
+                      <Tooltip content={app.patient?.name} placement="top">
+                        <Link
+                          href={`/dashboard/patients/${app.patient?._id}`}
+                          className="flex items-center gap-2 w-max cursor-pointer hover:opacity-80 transition-opacity"
+                        >
+                          <Avatar
+                            src={
+                              app.patient?.image ||
+                              `https://ui-avatars.com/api/?name=${app.patient?.name.replace(/\s/g, "+")}`
+                            }
+                            alt={app.patient?.name}
+                            size="sm"
+                            className="w-7 h-7 sm:w-8 sm:h-8"
+                          />
+                          <Typography
+                            variant="small"
+                            color="inherit"
+                            className="font-semibold max-w-[80px] sm:max-w-[110px] truncate text-xs sm:text-sm"
+                          >
+                            {app.patient?.name}
+                          </Typography>
+                        </Link>
+                      </Tooltip>
+                    </td>
+                    <td className={classes}>
+                      <div className="flex flex-col">
+                        <Typography
+                          variant="small"
+                          color="inherit"
+                          className="font-normal text-xs"
+                        >
+                          {new Date(app.appointmentDate).toLocaleDateString()}
+                        </Typography>
+                        <Typography
+                          variant="small"
+                          color="blue"
+                          className="font-bold mt-0.5 text-[10px] sm:text-xs"
+                        >
+                          {app.timeSlot || app.scheduledTime || "Time Not Set"}
+                        </Typography>
+                      </div>
+                    </td>
+                    <td className={classes}>
+                      <Tooltip content={app.reason} placement="top">
+                        <Typography
+                          variant="small"
+                          color="inherit"
+                          className="font-normal max-w-[80px] sm:max-w-[120px] truncate cursor-help text-xs sm:text-sm"
+                        >
+                          {app.reason}
+                        </Typography>
+                      </Tooltip>
+                    </td>
+                    <td className={classes}>
+                      <div className="w-max">
+                        <Chip
+                          size="sm"
+                          value={app.status}
+                          color={getStatusChipColor(app.status)}
+                          className="py-0.5 px-2 text-[9px] sm:text-[10px]"
+                        />
+                      </div>
+                    </td>
+                    <td className={classes}>
+                      <div className="flex gap-1.5 sm:gap-2 items-center">
+                        {app.status === "pending" && (
+                          <>
+                            <Button
+                              size="sm"
+                              color="green"
+                              className="py-1 px-2 text-[10px]"
+                              onClick={() =>
+                                handleUpdateStatus(
+                                  app._id,
+                                  "accepted",
+                                  app.patient?._id,
+                                )
+                              }
+                            >
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outlined"
+                              color="red"
+                              className="py-1 px-2 text-[10px]"
+                              onClick={() =>
+                                handleUpdateStatus(app._id, "rejected")
+                              }
+                            >
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                        {app.status === "accepted" && (
+                          <Typography
+                            variant="small"
+                            color="green"
+                            className="font-medium italic text-[10px] sm:text-xs"
+                          >
+                            Confirmed
+                          </Typography>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={5} className="p-8 text-center">
+                  <Typography className="opacity-80">
+                    No appointments found.
                   </Typography>
-                </div>
-
-                <div className="mb-2 md:mb-0 flex-[2.5]">
-                  <Typography variant="small" color="inherit">
-                    {app.reason}
-                  </Typography>
-                </div>
-
-                <div className="mb-2 md:mb-0 flex-1 flex justify-start md:justify-center">
-                  <Chip
-                    size="sm"
-                    value={app.status}
-                    color={getStatusChipColor(app.status)}
-                  />
-                </div>
-
-                <div className="flex gap-2 justify-start md:justify-center flex-[2] w-full md:w-auto">
-                  {app.status === "pending" && (
-                    <>
-                      <Button
-                        size="sm"
-                        color="green"
-                        onClick={() => handleUpdateStatus(app._id, "accepted")}
-                      >
-                        Accept
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outlined"
-                        color="red"
-                        onClick={() => handleUpdateStatus(app._id, "rejected")}
-                      >
-                        Reject
-                      </Button>
-                    </>
-                  )}
-                  {app.status === "accepted" && (
-                    <Button
-                      size="sm"
-                      color="blue"
-                      onClick={() => handleAddPatient(app.patient._id)}
-                    >
-                      Add Patient
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center p-10">
-              <Typography className="opacity-80">
-                No appointments found.
-              </Typography>
-            </div>
-          )}
-        </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </CardBody>
     </Card>
   );

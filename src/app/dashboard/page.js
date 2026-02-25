@@ -1,6 +1,6 @@
 // src/app/dashboard/page.js
 "use client";
-import { PlusIcon, UsersIcon } from "@heroicons/react/24/solid";
+import { UsersIcon } from "@heroicons/react/24/solid";
 import {
   Avatar,
   Button,
@@ -84,9 +84,6 @@ const DoctorDashboardPage = () => {
             {new Date().toLocaleDateString("en-US", { dateStyle: "full" })}
           </Typography>
         </div>
-        <Button color="blue" className="hidden md:flex items-center gap-2">
-          <PlusIcon className="h-5 w-5" /> Add Patient
-        </Button>
       </header>
 
       <Card className="p-6 bg-primary text-white">

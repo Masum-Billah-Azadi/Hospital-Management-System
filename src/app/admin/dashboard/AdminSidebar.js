@@ -4,11 +4,12 @@ import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import {
   Cog6ToothIcon,
   HomeIcon,
-  UserCircleIcon, // ১. নতুন আইকন ইম্পোর্ট
+  ReceiptRefundIcon,
+  UserCircleIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import { Card, Typography } from "@material-tailwind/react";
-import Link from "next/link"; // ২. লিংক ইম্পোর্ট
+import Link from "next/link";
 
 export function AdminSidebar() {
   return (
@@ -24,8 +25,8 @@ export function AdminSidebar() {
             </Typography>
           </div>
           <div className="flex flex-col gap-4">
-            {/* Dashboard Link */}
-            <Link href="/admin-dashboard">
+            {/* ✅ Dashboard Link ঠিক করা হলো */}
+            <Link href="/admin/dashboard">
               <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-primary/20 cursor-pointer text-light-text-secondary dark:text-dark-text-secondary">
                 <HomeIcon className="h-6 w-6" />
                 <Typography>Dashboard</Typography>
@@ -38,14 +39,21 @@ export function AdminSidebar() {
               <Typography color="inherit">Users</Typography>
             </div>
 
-            {/* --- ৩. নতুন সংযোজন: প্রোফাইল বাটন --- */}
+            {/* Profile Link */}
             <Link href="/admin/dashboard/profile">
               <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-primary/20 cursor-pointer text-light-text-secondary dark:text-dark-text-secondary">
                 <UserCircleIcon className="h-6 w-6" />
                 <Typography color="inherit">My Profile</Typography>
               </div>
             </Link>
-            {/* ----------------------------------- */}
+
+            {/* Refunds Link */}
+            <Link href="/admin/dashboard/refunds">
+              <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-primary/20 cursor-pointer text-light-text-secondary dark:text-dark-text-secondary">
+                <ReceiptRefundIcon className="h-6 w-6" />
+                <Typography color="inherit">Refunds</Typography>
+              </div>
+            </Link>
 
             {/* Settings Link */}
             <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-primary/20 cursor-pointer text-light-text-secondary dark:text-dark-text-secondary">
