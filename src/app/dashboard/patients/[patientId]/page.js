@@ -17,7 +17,8 @@ import {
   Textarea,
   Typography,
 } from "@material-tailwind/react";
-import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react"; // ✅ সিকিউরিটির জন্য ইমপোর্ট
+import { useParams, useRouter } from "next/navigation"; // ✅ useRouter ইমপোর্ট
 import { useCallback, useEffect, useState } from "react";
 
 import MedicineDetailsModal from "@/components/MedicineDetailsModal";
@@ -27,6 +28,10 @@ import ReportSection from "@/components/ReportSection";
 
 const PatientProfilePage = () => {
   const { patientId } = useParams();
+  const router = useRouter(); // ✅ রিডাইরেক্ট করার জন্য
+
+  // ✅ সেশন চেক করা হচ্ছে
+  const { data: session, status } = useSession();
 
   const [patientData, setPatientData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +77,16 @@ const PatientProfilePage = () => {
   const [isFetchingDetails, setIsFetchingDetails] = useState(false);
 
   /* ===========================================================
+   ✅ Security Check (Redirect if not logged in)
+  ============================================================ */
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      // যদি আপনার লগইন পেজের লিংক অন্য কিছু হয় (যেমন /auth/signin), তবে এটি পরিবর্তন করে নেবেন
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  /* ===========================================================
    ✅ Fetch Patient Profile
   ============================================================ */
   const fetchPatientProfile = useCallback(async () => {
@@ -97,9 +112,10 @@ const PatientProfilePage = () => {
     }
   }, [patientId]);
 
+  // লগইন করা থাকলেই কেবল ডাটা ফেচ হবে
   useEffect(() => {
-    if (patientId) fetchPatientProfile();
-  }, [patientId, fetchPatientProfile]);
+    if (patientId && status === "authenticated") fetchPatientProfile();
+  }, [patientId, status, fetchPatientProfile]);
 
   /* ===========================================================
    ✅ Medicine Suggestion Search
@@ -109,8 +125,8 @@ const PatientProfilePage = () => {
       setIsFetchingSuggestions(true);
       fetch(
         `/api/medicines/suggest?q=${encodeURIComponent(
-          searchTerm
-        )}&page=${pageToFetch}`
+          searchTerm,
+        )}&page=${pageToFetch}`,
       )
         .then((res) => res.json())
         .then((data) => {
@@ -122,7 +138,7 @@ const PatientProfilePage = () => {
         })
         .finally(() => setIsFetchingSuggestions(false));
     },
-    [searchTerm]
+    [searchTerm],
   );
 
   useEffect(() => {
@@ -268,7 +284,7 @@ const PatientProfilePage = () => {
           medications,
           generalNotes,
           suggestedReports: reportsArray,
-          followUp, // ✅ NEW
+          followUp,
         }),
       });
 
@@ -340,10 +356,11 @@ const PatientProfilePage = () => {
       setIsUploading(false);
     }
   };
+
   //Delete prescription from prescription history
   const handleDeletePrescription = async (prescriptionId) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this prescription?"
+      "Are you sure you want to delete this prescription?",
     );
     if (!confirmed) return;
 
@@ -356,7 +373,6 @@ const PatientProfilePage = () => {
       return;
     }
 
-    // UI update (important)
     setPatientData((prev) => ({
       ...prev,
       prescriptions: prev.prescriptions.filter((p) => p._id !== prescriptionId),
@@ -371,12 +387,27 @@ const PatientProfilePage = () => {
     window.open(`/api/prescriptions/${prescriptionId}/pdf`, "_blank");
 
   /* ===========================================================
-   ✅ UI Rendering
+   ✅ UI Rendering with Security Fallbacks
   ============================================================ */
 
-  if (loading)
+  // সেশন চেক করার সময় লোডিং দেখাবে
+  if (status === "loading") {
     return (
       <div className="flex justify-center items-center h-screen">
+        <Spinner className="h-16 w-16" />
+      </div>
+    );
+  }
+
+  // লগইন করা না থাকলে পেজ রেন্ডার হবে না (ইতিমধ্যেই রিডাইরেক্ট হয়ে যাবে)
+  if (status === "unauthenticated") {
+    return null;
+  }
+
+  // ডাটা ফেচ করার সময় লোডিং দেখাবে
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-[70vh]">
         <Spinner className="h-16 w-16" />
       </div>
     );
@@ -397,18 +428,18 @@ const PatientProfilePage = () => {
           <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
             <Avatar
               src={
-                user.image ||
-                `https://ui-avatars.com/api/?name=${user.name.replace(
+                user?.image ||
+                `https://ui-avatars.com/api/?name=${user?.name?.replace(
                   /\s/g,
-                  "+"
+                  "+",
                 )}`
               }
-              alt={user.name}
+              alt={user?.name || "Patient"}
               size="xxl"
             />
             <div>
-              <Typography variant="h4">{user.name}</Typography>
-              <Typography className="opacity-80">{user.email}</Typography>
+              <Typography variant="h4">{user?.name}</Typography>
+              <Typography className="opacity-80">{user?.email}</Typography>
             </div>
           </div>
         </CardBody>
@@ -725,7 +756,6 @@ const PatientProfilePage = () => {
                       <Option value="প্রয়োজনে">প্রয়োজনে</Option>
                     </Select>
 
-                    {/* ===== FIX: Duration ডিজাইন ঠিক করা হয়েছে ===== */}
                     <div className="relative h-10 w-full">
                       <div className="flex items-center h-full">
                         <Input
@@ -741,7 +771,7 @@ const PatientProfilePage = () => {
                                 value: e.target.value,
                                 unit: med.duration?.unit || "day",
                               },
-                              "duration"
+                              "duration",
                             )
                           }
                           color="blue-gray"
@@ -758,12 +788,11 @@ const PatientProfilePage = () => {
                             handleMedicationChange(
                               index,
                               { value: med.duration?.value || "", unit: value },
-                              "duration"
+                              "duration",
                             )
                           }
                           className="rounded-l-none border-l-0 dark:text-white"
                           color="blue-gray"
-                          // labelProps={{ className: "hidden" }} // ইনপুটের লেবেলটিই যথেষ্ট
                           containerProps={{ className: "min-w-[30%]" }}
                           menuProps={{
                             className: "bg-light-card dark:bg-dark-card ...",
@@ -823,7 +852,6 @@ const PatientProfilePage = () => {
                 }}
               />
 
-              {/* ===== FIX: Follow-Up ডিজাইন ঠিক করা হয়েছে ===== */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="relative h-10 w-full">
                   <div className="flex items-center h-full">
@@ -853,7 +881,6 @@ const PatientProfilePage = () => {
                       }
                       className="rounded-l-none border-l-0 dark:text-white"
                       color="blue-gray"
-                      // labelProps={{ className: "hidden" }}
                       containerProps={{ className: "min-w-[30%]" }}
                       menuProps={{
                         className: "bg-light-card dark:bg-dark-card ...",
@@ -865,7 +892,7 @@ const PatientProfilePage = () => {
                     </Select>
                   </div>
                 </div>
-                <div></div> {/* Placeholder for the second column */}
+                <div></div>
               </div>
 
               <div className="flex justify-end gap-2">
@@ -922,7 +949,7 @@ const PatientProfilePage = () => {
           setSuggestions((prev) =>
             prev
               .map((m) => (m._id === updated._id ? updated : m))
-              .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+              .sort((a, b) => (b.rating || 0) - (a.rating || 0)),
           );
         }}
       />
