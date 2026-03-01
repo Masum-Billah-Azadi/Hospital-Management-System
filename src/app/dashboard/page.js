@@ -144,9 +144,11 @@ const DoctorDashboardPage = () => {
                   />
                   <span>{app.patient?.name}</span>
                 </div>
-                <span>
-                  {app.scheduledTime ||
-                    new Date(app.appointmentDate).toLocaleTimeString([], {
+                <span className="text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-gray-800 px-3 py-1 rounded-full">
+                  {app.timeSlot ||
+                    app.slot ||
+                    app.scheduledTime ||
+                    new Date(app.appointmentDate).toLocaleTimeString("en-US", {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
