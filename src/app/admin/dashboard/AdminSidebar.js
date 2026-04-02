@@ -54,6 +54,13 @@ export function AdminSidebar() {
                 <Typography color="inherit">Refunds</Typography>
               </div>
             </Link>
+            <Link
+              href="/dashboard/homeo-repertory"
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-lg font-medium"
+            >
+              <span>⚕️</span>
+              <span>Homeo Repertory</span>
+            </Link>
 
             {/* Settings Link */}
             <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-primary/20 cursor-pointer text-light-text-secondary dark:text-dark-text-secondary">

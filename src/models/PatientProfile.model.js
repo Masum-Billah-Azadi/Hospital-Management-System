@@ -15,6 +15,10 @@ const PatientProfileSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    // ✅ নতুন ফিল্ড: ডক্টরের পেশেন্ট লিস্টের সিরিয়াল নাম্বার ট্র্যাক করার জন্য
+    serialNumber: {
+      type: Number,
+    },
     age: { type: String },
     gender: {
       type: String,

@@ -3,6 +3,7 @@
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import {
   Bars3Icon,
+  BookOpenIcon,
   CalendarDaysIcon,
   HomeIcon,
   PowerIcon,
@@ -88,6 +89,13 @@ export function DoctorNavbar() {
             >
               <UserCircleIcon className="h-4 w-4" /> Profile
             </MenuItem>
+            <MenuItem
+              onClick={() => router.push("/dashboard/homeo-repertory")}
+              className="flex items-center gap-2"
+            >
+              <BookOpenIcon className="h-4 w-4" /> Homeo Repertory
+            </MenuItem>
+
             <MenuItem
               onClick={() =>
                 window.open(

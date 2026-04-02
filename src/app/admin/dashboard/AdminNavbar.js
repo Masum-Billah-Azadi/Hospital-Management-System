@@ -85,6 +85,13 @@ export function AdminNavbar() {
                 </Typography>
               </MenuItem>
             </Link>
+            <Link
+              href="/dashboard/homeo-repertory"
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-lg font-medium"
+            >
+              <span>⚕️</span>
+              <span>Homeo Repertory</span>
+            </Link>
 
             {/* Blood Bank (old) */}
             <MenuItem
